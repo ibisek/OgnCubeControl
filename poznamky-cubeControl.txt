@@ -1,0 +1,51 @@
+Installing dependencies:
+    https://flutter.dev/docs/development/packages-and-plugins/using-packages
+    flutter pub get
+
+Getting started:
+    https://flutter.dev/docs/get-started/codelab
+
+Cookbook:
+    https://flutter.dev/docs/cookbook
+    https://flutter.dev/docs/cookbook/navigation/navigation-basics
+
+Tutorials:
+   https://pusher.com/tutorials/flutter-listviews
+
+Widget catalog:
+    https://flutter.dev/docs/development/ui/widgets/layout
+    https://flutter.dev/docs/development/ui/widgets/material
+    https://material.io/components/
+
+Flutter vs. Android diffs:
+    https://flutter.dev/docs/get-started/flutter-for/android-devs#how-do-you-move-work-to-a-background-thread
+
+Bluetooth:
+    https://pub.dev/packages/flutter_bluetooth_serial
+    https://pub.dev/documentation/flutter_bluetooth_serial/latest/flutter_bluetooth_serial/flutter_bluetooth_serial-library.html#classes
+    https://medium.com/flutter-community/flutter-adding-bluetooth-functionality-1b9715ccc698
+
+    BLE:
+        https://pub.dev/packages/flutter_blue
+        https://pub.dev/documentation/flutter_blue/0.4.0/
+
+        https://medium.com/@pietrowicz.eric/bluetooth-low-energy-development-with-flutter-and-circuitpython-c7a25eafd3cf
+
+
+
+
+--
+
+firebase_database: ^1.0.5
+firebase_storage: ^1.0.4
+
+Fluttertoast.cancel();
+Fluttertoast.showToast(
+  msg: "This is Center Short Toast",
+  toastLength: Toast.LENGTH_LONG,
+  gravity: ToastGravity.BOTTOM,
+  timeInSecForIos: 2,
+  backgroundColor: Colors.lightBlue,
+  textColor: Colors.white,
+  fontSize: 16.0
+);
