@@ -9,6 +9,9 @@ Cookbook:
     https://flutter.dev/docs/cookbook
     https://flutter.dev/docs/cookbook/navigation/navigation-basics
 
+    Return data from screen:
+        https://flutter.dev/docs/cookbook/navigation/returning-data
+
 Tutorials:
    https://pusher.com/tutorials/flutter-listviews
 
