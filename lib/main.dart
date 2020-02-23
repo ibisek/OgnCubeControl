@@ -69,7 +69,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   Widget getRow(int i) {
     Row row = Row(
       children: <Widget>[
-        Text("${firmwares[i].type} | ${firmwares[i].date}",
+        Container(
+          padding: const EdgeInsets.only(left: 6, right: 8),   //all(8),
+          child: Icon( firmwares[i].storedLocally ? Icons.sd_storage : Icons.cloud_queue),
+        ),
+        Text("${firmwares[i].type}\n${firmwares[i].date}",
             textAlign: TextAlign.left),
         Expanded(
           child: Text("${firmwares[i].title}", textAlign: TextAlign.center),
@@ -80,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
     Container c = Container(
       padding: const EdgeInsets.all(8),
-      height: 40,
+      height: 50,
       child: row,
     );
 
