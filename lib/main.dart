@@ -7,6 +7,7 @@ import 'dart:convert';
 
 import 'package:cube_control/firmware.dart';
 import 'package:cube_control/firmwareUpdatePage.dart';
+import 'package:cube_control/btManager.dart';
 
 void main() => runApp(MyApp());
 
@@ -46,6 +47,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     loadFirmwareList();
+
+    BTManager.instance.init();
   }
 
   // Observes the app state. Detects application shutdown.
@@ -125,9 +128,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     clearFirmwareList();
 
     String dataURL = "https://raw.githubusercontent.com/ibisek/ognCube/master/releases/firmwares.json";
-    http.Response response = await http.get(dataURL);
 
-    if (response.statusCode == 200) {
+    http.Response response;
+    try {
+      response = await http.get(dataURL);
+    } catch (exception) {
+      // nix
+    }
+
+    if (response != null && response.statusCode == 200) {
       setState(() {
         List jsonList = json.decode(response.body);
         while (jsonList.length > 0) {
@@ -144,11 +153,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
     } else {
       Fluttertoast.showToast(
-        msg: "Couldn't load firmware list. Are you online?",
+        msg: "Can not load firmware list. Are you online?",
         toastLength: Toast.LENGTH_LONG,
       );
 
-      throw Exception('Failed to load firmware list');
+      // throw Exception('Failed to load firmware list');
     }
   }
 
