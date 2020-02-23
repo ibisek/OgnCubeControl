@@ -7,6 +7,7 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 
 import 'package:cube_control/firmware.dart';
 import 'package:cube_control/btManager.dart';
+import 'package:cube_control/deviceListPage.dart';
 
 
 class FirmwareUpdatePage extends StatefulWidget {
@@ -23,8 +24,7 @@ class FirmwareUpdatePage extends StatefulWidget {
 class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
 
   var terminal = TextEditingController();
-  bool btDeviceConnected = true;
-  List<BluetoothDevice> pairedBtDevices;
+  bool btDeviceConnected = false;
 
   @override
   void initState() {
@@ -47,7 +47,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
           content: Text("No bluetooth device selected!"),
           action: SnackBarAction(
             label: 'Fix it!',
-            onPressed: () { print('## GO TO SHOW DEVICES SCREEN ##'); /*TODO navigate to device select screen*/ },
+            onPressed: () { Navigator.of(context).pushNamed(DeviceListPage.routeName); },
             ),
           ),
         );
@@ -55,13 +55,15 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
         return;
       }
 
+      terminal.clear();
+      printToTerminal("Connecting to '${BTManager().selectedDevice.name}'..");
       bool res = await BTManager().connectTo(BTManager().selectedDevice);
       if (!res) {
-        Fluttertoast.showToast(
-          msg: "Connection failed",
-          toastLength: Toast.LENGTH_SHORT,
-        );
+        printToTerminal("Connection failed.");
+        return;
       }
+
+      printToTerminal("Success!");
     }
 
     // flip the state:
@@ -82,6 +84,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
         .of(context)
         .settings
         .arguments;
+    //TODO print firmware target, version and filename to console
 
     return Scaffold(
       appBar: AppBar(
@@ -99,11 +102,11 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
                   ),
               ),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            tooltip: 'clear log area',
-            onPressed: onDeleteIconClick,
-          ),
+//          IconButton(
+//            icon: const Icon(Icons.delete),
+//            tooltip: 'clear log area',
+//            onPressed: onDeleteIconClick,
+//          ),
           IconButton(
             icon: const Icon(Icons.help_outline),
             tooltip: 'instructions',
@@ -142,7 +145,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
                         decoration: InputDecoration.collapsed(
                             hintText: "Info about update process will appear here.."
                         ),
-                        style: TextStyle(color: Colors.green, /*fontFamily: 'Courier',*/),
+                        style: TextStyle(color: Colors.black, /*fontFamily: 'Courier',*/),
                       ),
                     ),
                   ),
@@ -167,11 +170,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
 
   void flashFirmware() async {
     if(!btDeviceConnected) {
-      Fluttertoast.showToast(
-        msg: "Not connected!",
-        toastLength: Toast.LENGTH_SHORT,
-      );
-
+      printToTerminal("Not connected!");
       return;
     }
 

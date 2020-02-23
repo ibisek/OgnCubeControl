@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:fluttertoast/fluttertoast.dart';
-
-import 'dart:async';
 import 'dart:convert';
-
 import 'package:cube_control/firmware.dart';
 import 'package:cube_control/firmwareUpdatePage.dart';
+import 'package:cube_control/deviceListPage.dart';
 import 'package:cube_control/btManager.dart';
 
 void main() => runApp(MyApp());
@@ -21,10 +19,9 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: MyHomePage(title: 'OGN Cube Firmwares'),
-      routes: <String, WidgetBuilder> {
+      routes: <String, WidgetBuilder>{
         FirmwareUpdatePage.routeName: (BuildContext context) => FirmwareUpdatePage(title: 'Firmware Upload'),
-//        '/b': (BuildContext context) => MyPage(title: 'page B'),
-//        '/c': (BuildContext context) => MyPage(title: 'page C'),
+        DeviceListPage.routeName: (BuildContext context) => DeviceListPage(title: 'Paired Devices'),
       },
     );
   }
@@ -40,15 +37,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
-  List firmwares = [];
+  List firmwares = List();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     loadFirmwareList();
-
-    BTManager.instance.init();
   }
 
   // Observes the app state. Detects application shutdown.
@@ -60,24 +55,24 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   Widget getProgressDialog() {
     return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              CircularProgressIndicator(),
-              //LinearProgressIndicator(),
-              Text('\nChecking available firmwares..'),
-          ],
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          CircularProgressIndicator(),
+          //LinearProgressIndicator(),
+          Text('\nChecking available firmwares..'),
+        ],
+      ),
     );
   }
 
   Widget getRow(int i) {
-
     Row row = Row(
       children: <Widget>[
-        Text("${firmwares[i].type} | ${firmwares[i].date}", textAlign: TextAlign.left),
+        Text("${firmwares[i].type} | ${firmwares[i].date}",
+            textAlign: TextAlign.left),
         Expanded(
-        child: Text("${firmwares[i].title}", textAlign: TextAlign.center),
+          child: Text("${firmwares[i].title}", textAlign: TextAlign.center),
         ),
         Icon(Icons.keyboard_arrow_right), //cloud_download | save_alt
       ],
@@ -95,12 +90,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   ListView getListView(BuildContext context) {
     return ListView.separated(
       itemCount: firmwares.length,
-        itemBuilder: (BuildContext context, int index) {
-          return new GestureDetector(
-            onTap: () => onListItemTap(index),
-            child: getRow(index),
-          );
-        },
+      itemBuilder: (BuildContext context, int index) {
+        return new GestureDetector(
+          onTap: () => onListItemTap(index),
+          child: getRow(index),
+        );
+      },
       separatorBuilder: (context, index) {
         return Divider();
       },
@@ -115,7 +110,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   onListItemTap(index) {
-    Navigator.of(context).pushNamed(FirmwareUpdatePage.routeName, arguments: firmwares[index]);
+    Navigator.of(context)
+        .pushNamed(FirmwareUpdatePage.routeName, arguments: firmwares[index]);
   }
 
   void clearFirmwareList() {
@@ -127,7 +123,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   loadFirmwareList() async {
     clearFirmwareList();
 
-    String dataURL = "https://raw.githubusercontent.com/ibisek/ognCube/master/releases/firmwares.json";
+    String dataURL =
+        "https://raw.githubusercontent.com/ibisek/ognCube/master/releases/firmwares.json";
 
     http.Response response;
     try {
@@ -144,13 +141,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           Firmware fw = Firmware.fromJson(item);
           firmwares.add(fw);
 
-          fw.getTs();
+          fw.getTs(); // just to set the TS in the instance
         }
 
         // order by date desc (most recent at the top):
         firmwares.sort((a, b) => b.timestamp - a.timestamp);
       });
-
     } else {
       Fluttertoast.showToast(
         msg: "Can not load firmware list. Are you online?",
@@ -163,10 +159,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold (
+    return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-
       ),
       body: getBody(),
 //      body: Center(

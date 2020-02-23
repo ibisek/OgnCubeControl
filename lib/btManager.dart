@@ -24,9 +24,10 @@ class BTManager {
   List<BluetoothDevice> pairedBtDevices = List();
   BluetoothDevice selectedDevice, connectedDevice;
   BluetoothConnection connection;
+  int selectedIndex = -1; // = none
 
-  void init() async {
-    bool btAvailable = await FlutterBluetoothSerial.instance.isAvailable;
+  Future<bool> refresh() async {
+    btAvailable = await FlutterBluetoothSerial.instance.isAvailable;
     print("[INFO] btAvailable: $btAvailable");
 
     if(btAvailable) {
@@ -35,6 +36,8 @@ class BTManager {
 
     // TODO load lastly selected and used device & highlight it (in the list view)
 
+    print("[INFO] btInit() finished");
+    return true;
   }
 
   /// Connects to specified device.
@@ -43,7 +46,7 @@ class BTManager {
     if (identical(dev, connectedDevice)) {
       return true;
 
-    } else if(connectedDevice.isConnected && connection.isConnected) {
+    } else if(connectedDevice != null && connection.isConnected) {
       connection.close();
       connection = null;
     }
@@ -51,28 +54,22 @@ class BTManager {
 
     try {
       connection = await BluetoothConnection.toAddress(dev.address);
-      connectedDevice = dev;
-
       print("[INFO] isConnected: ${connection.isConnected}");
-
-      Fluttertoast.showToast(
-        msg: "Connected to'${dev.name}'",
-        toastLength: Toast.LENGTH_LONG,
-      );
+      connectedDevice = dev;
 
       return true;
 
     } catch (exception) {
       connectedDevice = null;
-      print("[ERROR] Couldn't connect to '${dev.name}':"+exception.toString());
-
-      Fluttertoast.showToast(
-        msg: "Couldn't connect to '${dev.name}'",
-        toastLength: Toast.LENGTH_LONG,
-      );
+      print("[FAIL] Couldn't connect to '${dev.name}':"+exception.toString());
     }
 
     return false;
+  }
+
+  void setSelectedIndex(int index) {
+    selectedIndex = index;
+    selectedDevice = pairedBtDevices[index];
   }
 
   /// @return True if current device (if even selected) is connected
