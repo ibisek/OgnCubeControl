@@ -145,11 +145,11 @@ class _DeviceListPageState extends State<DeviceListPage> {
         ],
       ),
       body: getBody(),
-//      floatingActionButton: FloatingActionButton.extended(
-//        onPressed: refreshListView,
-//        tooltip: 'Refresh',
-//        icon: Icon(Icons.refresh),
-//      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: refreshListView,
+        tooltip:  'Refresh',
+        child: Icon(Icons.refresh),
+      ),
     );
   }
 
