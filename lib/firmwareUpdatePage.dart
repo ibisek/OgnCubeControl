@@ -25,6 +25,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
 
   var terminal = TextEditingController();
   bool btDeviceConnected = false;
+  Firmware firmware;
 
   @override
   void initState() {
@@ -46,7 +47,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
         Scaffold.of(context).showSnackBar(SnackBar(
           content: Text("No bluetooth device selected!"),
           action: SnackBarAction(
-            label: 'Fix it!',
+            label: 'Select',
             onPressed: () { Navigator.of(context).pushNamed(DeviceListPage.routeName); },
             ),
           ),
@@ -59,11 +60,11 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
       printToTerminal("Connecting to '${BTManager().selectedDevice.name}'..");
       bool res = await BTManager().connectTo(BTManager().selectedDevice);
       if (!res) {
-        printToTerminal("Connection failed.");
+        printToTerminal("  Connection failed.\n  Cannot continue.");
         return;
       }
 
-      printToTerminal("Success!");
+      printToTerminal("  Success! :)");
     }
 
     // flip the state:
@@ -80,7 +81,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
   @override
   Widget build(BuildContext context) {
     // pop-up the argumens sent from the previous page:
-    final Firmware firmware = ModalRoute
+    firmware = ModalRoute
         .of(context)
         .settings
         .arguments;
@@ -168,13 +169,48 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     terminal.text += "$str\n";
   }
 
+  Future<bool> downloadFirmware(Firmware fw) async {
+    http.Response response;
+    try {
+      response = await http.get(fw.url);
+    } catch (exception) {
+      // nix
+    }
+
+    if (response != null && response.statusCode == 200) {
+      printToTerminal("  got ${response.contentLength} bytes");
+      fw.bytes = response.bodyBytes;
+
+      // TODO store firmware locally
+      // firmware.isStoredLocally = true;
+
+      return true;
+    }
+
+    return false;
+  }
+
   void flashFirmware() async {
     if(!btDeviceConnected) {
       printToTerminal("Not connected!");
       return;
     }
 
-    printToTerminal("All right, hold my beer..\n");
+    printToTerminal("All right, hold my beer..");
+
+    if(firmware != null && firmware.bytes == null) {
+      printToTerminal("Downloading file '${firmware.filename}'..");
+      bool res = await downloadFirmware(firmware);
+      if (!res) {
+        printToTerminal("  Connection failed.\n  Cannot continue.");
+        return;
+
+      } else {
+        printToTerminal("  this is good!");
+      }
+    }
+
+    printToTerminal("And this is where the fun begins!");
 
     // TODO flash process in a background thread..
 
