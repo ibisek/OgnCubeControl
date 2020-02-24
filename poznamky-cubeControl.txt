@@ -36,6 +36,9 @@ Bluetooth:
         https://medium.com/@pietrowicz.eric/bluetooth-low-energy-development-with-flutter-and-circuitpython-c7a25eafd3cf
 
 
+pauza:
+    await Future.delayed(new Duration(milliseconds: 1));
+
 
 
 --
