@@ -1,4 +1,6 @@
 
+import 'dart:typed_data';
+
 class Firmware {
   final String type;
   final String date;
@@ -8,7 +10,8 @@ class Firmware {
   final String url;
 
   int timestamp;  // unix ts [s]
-  bool storedLocally = false; // indicates this file needs to be downloaded
+  bool isStoredLocally = false; // indicates this file needs to be downloaded
+  Uint8List bytes;  // firmware bytes
 
   Firmware({this.type, this.date, this.title,  this.notes, this.filename, this.url});
 
