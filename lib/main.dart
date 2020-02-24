@@ -5,7 +5,6 @@ import 'dart:convert';
 import 'package:cube_control/firmware.dart';
 import 'package:cube_control/firmwareUpdatePage.dart';
 import 'package:cube_control/deviceListPage.dart';
-import 'package:cube_control/btManager.dart';
 
 void main() => runApp(MyApp());
 
@@ -18,7 +17,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'OGN Cube Firmwares'),
+      home: MyHomePage(title: 'Available Firmwares'),
       routes: <String, WidgetBuilder>{
         FirmwareUpdatePage.routeName: (BuildContext context) => FirmwareUpdatePage(title: 'Firmware Upload'),
         DeviceListPage.routeName: (BuildContext context) => DeviceListPage(title: 'Paired Devices'),
@@ -71,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       children: <Widget>[
         Container(
           padding: const EdgeInsets.only(left: 6, right: 8),   //all(8),
-          child: Icon( firmwares[i].storedLocally ? Icons.sd_storage : Icons.cloud_queue),
+          child: Icon( firmwares[i].isStoredLocally ? Icons.sd_storage : Icons.cloud_queue),
         ),
         Text("${firmwares[i].type}\n${firmwares[i].date}",
             textAlign: TextAlign.left),
@@ -161,12 +160,61 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
   }
 
+  Widget getDrawer() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: Colors.blue,
+            ),
+            child: Text(
+              'OGN Cube Control',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+              ),
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.settings_bluetooth),
+            title: Text('Paired devices'),
+            onTap: () { Navigator.of(context).pushNamed(DeviceListPage.routeName); },
+          ),
+          ListTile(
+            leading: Icon(Icons.system_update_alt),
+            title: Text('Firmware updates'),
+            selected: true,
+            onTap: () { Navigator.pop(context); }, // close the drawer
+          ),
+//          ListTile(
+//            leading: FlutterLogo(size: 40.0),
+//            title: Text('My OGN Cubes'),
+//            subtitle: Text('Select active bluetooth connection'),
+//          ),
+          ListTile(
+            leading: Icon(Icons.library_books),
+            title: Text('Logbook'),
+            enabled: false,
+          ),
+          ListTile(
+            leading: Icon(Icons.flight),
+            title: Text('Flights'),
+            enabled: false,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
+      drawer: getDrawer(),
       body: getBody(),
 //      body: Center(
 //        // Center is a layout widget. It takes a single child and positions it
