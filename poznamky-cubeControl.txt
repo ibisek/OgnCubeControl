@@ -17,6 +17,7 @@ Tutorials:
 
 Widget catalog:
     https://flutter.dev/docs/development/ui/widgets/layout
+    https://flutter.dev/docs/development/ui/widgets
     https://flutter.dev/docs/development/ui/widgets/material
     https://material.io/components/
 
