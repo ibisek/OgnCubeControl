@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 ///
 /// Manages all affairs regarding bluetooth.
 /// Keeps list of paired devices.
@@ -10,6 +11,7 @@
 
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'dart:typed_data';
 
 
 class BTManager {
@@ -43,7 +45,7 @@ class BTManager {
   /// Connects to specified device.
   /// @return True if successful
   Future<bool> connectTo(BluetoothDevice dev) async {
-    if (identical(dev, connectedDevice)) {
+    if (identical(dev, connectedDevice) && connectedDevice.isConnected) {
       return true;
 
     } else if(connectedDevice != null && connection.isConnected) {
@@ -57,14 +59,38 @@ class BTManager {
       print("[INFO] isConnected: ${connection.isConnected}");
       connectedDevice = dev;
 
+      startListening(connection);
+
       return true;
 
     } catch (exception) {
       connectedDevice = null;
-      print("[FAIL] Couldn't connect to '${dev.name}':"+exception.toString());
+      print("[FAIL] Couldn't connect to '${dev.name}'. Exception: "+exception.toString());
     }
 
     return false;
+  }
+
+  int i = 0;
+//  Uint8ClampedList byteBuffer = Uint8ClampedList(1*1024);
+  StringBuffer rxDataBuffer = StringBuffer();
+
+  void clearBuffer() {
+    rxDataBuffer.clear();
+  }
+
+  void startListening(BluetoothConnection conn) {
+    clearBuffer();
+
+    conn.input.listen((data) {
+      String strData = String.fromCharCodes(data);
+      rxDataBuffer.write(strData);
+      //print("[BUF LEN] ${rxDataBuffer.length} [NUM LINES] ${i++} [RX] $strData");
+
+    }).onDone(() {
+      print("[INFO] BT disconnected by remote peer");
+      connectedDevice = null;
+    });
   }
 
   void setSelectedIndex(int index) {
@@ -74,7 +100,7 @@ class BTManager {
 
   /// @return True if current device (if even selected) is connected
   bool isConnected() {
-    if(connectedDevice != null && connectedDevice.isConnected)
+    if(connectedDevice != null && connection.isConnected)
       return true;
 
     return false;
@@ -84,6 +110,32 @@ class BTManager {
   void disconnect() {
     if(connection != null && connection.isConnected)
       connection.close();
+  }
+
+  bool writeStr(String str) {
+    if(!connection.isConnected) return false;
+
+    List<int> list = str.codeUnits;
+    Uint8List bytes = Uint8List.fromList(list);
+
+    return writeBytes(bytes);
+  }
+
+  bool writeBytes(Uint8List bytes) {
+    connection.output.add(bytes);
+
+    return true;
+  }
+
+  String readLine() {
+    int i = rxDataBuffer.toString().indexOf('\n');
+    if(i >= 0) {
+      String line = rxDataBuffer.toString().substring(0, i+1);
+      rxDataBuffer = StringBuffer(rxDataBuffer.toString().substring(i+1));
+      return line;
+    }
+
+    return null;
   }
 
 } // ~ class
