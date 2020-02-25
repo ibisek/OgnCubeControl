@@ -1,3 +1,4 @@
+import 'package:cube_control/btManager.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:fluttertoast/fluttertoast.dart';
@@ -48,7 +49,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   // Observes the app state. Detects application shutdown.
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
-      // TODO close bluetooth connection of open and active
+      if(BTManager().isConnected()) BTManager().disconnect();
     }
   }
 
