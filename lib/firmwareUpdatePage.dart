@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'dart:typed_data';
 
 import 'package:cube_control/firmware.dart';
 import 'package:cube_control/btManager.dart';
@@ -24,13 +25,12 @@ class FirmwareUpdatePage extends StatefulWidget {
 class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
 
   var terminal = TextEditingController();
-  bool btDeviceConnected = false;
   Firmware firmware;
+  bool btDeviceConnected = false; // just for the connected icon state
 
   @override
   void initState() {
     super.initState();
-    btDeviceConnected = BTManager().isConnected();
 //    logArea.text += "Target type: ${firmware.type}\nRelease date: ${firmware.date}\nFile name: ${firmware.filename}";
   }
 
@@ -39,8 +39,9 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
   }
 
   void onConnectIconClick(context) async {
-    if(btDeviceConnected) {
+    if(BTManager().isConnected()) {
       BTManager().disconnect();
+      printToTerminal("Disconnected.");
 
     } else {
       if (BTManager().selectedDevice == null) {
@@ -69,7 +70,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
 
     // flip the state:
     setState(() {
-      btDeviceConnected = !btDeviceConnected;
+      btDeviceConnected = BTManager().isConnected();
     });
   }
 
@@ -86,6 +87,8 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
         .settings
         .arguments;
     //TODO print firmware target, version and filename to console
+
+    btDeviceConnected = BTManager().isConnected();  // get current actual state
 
     return Scaffold(
       appBar: AppBar(
@@ -190,8 +193,36 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     return false;
   }
 
+  /// Sends a COMMAND to unit and awaits for EXPECTed string in the line.
+  /// @param cmd: command either as String or Uint8List
+  /// @param expect: a string to expect in the response line
+  /// @param delayMs: optional, default 400ms
+  Future<String> queryTheUnit(dynamic cmd, String expect, {int delayMs=400}) async {
+    BTManager btm = BTManager();
+
+    btm.clearBuffer();
+    if (cmd is String)  btm.writeStr(cmd);
+    else if (cmd is Uint8List) btm.writeBytes(cmd);
+    else {
+      print("[ERROR] Wrong CMD argument type!");
+      return null;
+    }
+
+    await Future.delayed(new Duration(milliseconds: delayMs)); // give it some time
+
+    String response;
+
+    int maxLoops = 123;
+    do {
+      response = btm.readLine();
+    } while(--maxLoops > 0 && (response == null || response.indexOf(expect) < 0));
+
+    if (maxLoops > 0) return response;
+    else return null;
+  }
+
   void flashFirmware() async {
-    if(!btDeviceConnected) {
+    if(!BTManager().isConnected()) {
       printToTerminal("Not connected!");
       return;
     }
@@ -206,47 +237,67 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
         return;
 
       } else {
-        printToTerminal("  this is good!");
+        printToTerminal("  this is good.");
       }
     }
 
-    printToTerminal("And this is where the fun begins!");
+    printToTerminal("And now the fun begins!");
+
+    // get OGN id from the BT device name:
+    String btDeviceName = BTManager().connectedDevice.name;
+    RegExp re = new RegExp(r'(\d{6})');
+    var match = re.firstMatch(btDeviceName);
+    String ognIdStr = btDeviceName.substring(match.start, match.end);
+    int ognId = int.parse(ognIdStr, radix: 16); // HEX str id to int
+    //print("OGN id as str: ognIdStr");
+    //print("OGN id in DEC: $cpuId");
+
+    String resp = await queryTheUnit('\$CMDVER\n', '\$VER'); // $VER;CUBE3;021338;2020-02-19*59
+    print("VER resp: $resp");
+    if(resp.indexOf(ognIdStr) < 0) {  // check device ids match
+      printToTerminal("Selected ('$ognIdStr') and remote ('${resp.split(';')[2]}') devices IDs do not match!");
+      return;
+    }
+
+    resp = await queryTheUnit('\$CMDRST\n', 'seconds', delayMs: 5000); // ## serialLoader.f103 ##
+    print("RST resp: $resp");
+
+    resp = await queryTheUnit('\nPROG', 'CPU ID?');
+    print("PROG resp: $resp");
+
+    // convert String ID to '\n' + 3 bytes:
+    Uint8List bytes = new Uint8List(4);  // these 4 bytes will contain '\nCPUID'
+    var buffer = bytes.buffer;
+    var bdata = new ByteData.view(buffer);
+    bdata.setUint32(0, ognId);
+    bytes[0] = '\n'.codeUnitAt(0);
+    //print("OGN id as DEC bytes: $bytes");
+
+    resp = await queryTheUnit(bytes, 'START ADDR?');  // expects '\n' + 3 bytes of lowest CPU id
+    print("CPUID resp: $resp");
+
+    bytes = new Uint8List(5);  // these 5 bytes will contain '\nADDR'
+    buffer = bytes.buffer;
+    bdata = new ByteData.view(buffer);
+    bdata.setUint32(1, int.parse("08002800", radix: 16));  // 0x08002800
+    bytes[0] = '\n'.codeUnitAt(0);
+    //print("ADDR as DEC bytes: $bytes");
+
+    resp = await queryTheUnit(bytes, 'LEN?');  // expects '\n' + 4 bytes 0x08002800 = 134227968 dec
+    print("START ADDR resp: $resp");
+
+    bytes = new Uint8List(4);
+    buffer = bytes.buffer;
+    bdata = new ByteData.view(buffer);
+    bdata.setUint32(0, firmware.bytes.lengthInBytes);
+    bytes[0] = '\n'.codeUnitAt(0);
+    print("FW LEN ${firmware.bytes.lengthInBytes} B as DEC array: $bytes");
+
+    resp = await queryTheUnit(bytes, 'OK'); // expects '\n' + 3 bytes while length % 4 == 0
+    print("DATA LEN resp: $resp");
 
     // TODO flash process in a background thread..
 
-//    var btAvailable = await FlutterBluetoothSerial.instance.isAvailable;
-//    print("btAvailable: $btAvailable");
-//    if(btAvailable) {
-//      pairedBtDevices = await FlutterBluetoothSerial.instance.getBondedDevices();
-//      print("LLL: $pairedBtDevices");
-//      for(BluetoothDevice dev in pairedBtDevices) {
-//        logArea.text += "${dev.address} -> ${dev.name}\n";
-//      }
-//
-//      BluetoothDevice dev = pairedBtDevices[2];
-//
-//      if(!dev.isConnected) {
-//        try {
-//          BluetoothConnection conn = await BluetoothConnection.toAddress(dev.address);
-//          print("isConnected: ${conn.isConnected}");
-//
-//          conn.input.listen((data) {
-//            String strData = "";
-//            for (var i in data) strData += String.fromCharCode(i);
-//            print("data: $strData");
-//            logArea.text += strData;
-//
-//          }).onDone(() {
-//            print("Disconnected by remote peer");
-//          });
-//
-////          conn.output.add([0,1,3,4]); // TOTO posilani dat
-//
-//        } catch (exception) {
-//          print('Error when connecting to device');
-//        }
-//      }
-//    }
   }
 
 } // ~ class
