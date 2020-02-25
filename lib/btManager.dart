@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 ///
 /// Manages all affairs regarding bluetooth.
 /// Keeps list of paired devices.
@@ -9,7 +8,7 @@ import 'package:flutter/cupertino.dart';
 /// @see https://stackoverflow.com/questions/12649573/how-do-you-build-a-singleton-in-dart
 ///
 
-import 'package:fluttertoast/fluttertoast.dart';
+
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'dart:typed_data';
 
@@ -71,8 +70,6 @@ class BTManager {
     return false;
   }
 
-  int i = 0;
-//  Uint8ClampedList byteBuffer = Uint8ClampedList(1*1024);
   StringBuffer rxDataBuffer = StringBuffer();
 
   void clearBuffer() {
@@ -85,7 +82,7 @@ class BTManager {
     conn.input.listen((data) {
       String strData = String.fromCharCodes(data);
       rxDataBuffer.write(strData);
-      //print("[BUF LEN] ${rxDataBuffer.length} [NUM LINES] ${i++} [RX] $strData");
+      //print("[BUF LEN] ${rxDataBuffer.length} [RXL] $strData");
 
     }).onDone(() {
       print("[INFO] BT disconnected by remote peer");
