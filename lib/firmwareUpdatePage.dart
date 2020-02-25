@@ -2,8 +2,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'dart:typed_data';
 
 import 'package:cube_control/firmware.dart';
@@ -168,8 +166,9 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     );
   }
 
-  void printToTerminal(String str) {
-    terminal.text += "$str\n";
+  void printToTerminal(String str, {String endLine='\n'}) {
+    terminal.text += "$str";
+    if(endLine != null) terminal.text += endLine;
   }
 
   Future<bool> downloadFirmware(Firmware fw) async {
@@ -182,7 +181,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
 
     if (response != null && response.statusCode == 200) {
       printToTerminal("  got ${response.contentLength} bytes");
-      fw.bytes = response.bodyBytes;
+      fw.setBytes(response.bodyBytes);
 
       // TODO store firmware locally
       // firmware.isStoredLocally = true;
@@ -199,13 +198,15 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
   /// @param delayMs: optional, default 400ms
   Future<String> queryTheUnit(dynamic cmd, String expect, {int delayMs=400}) async {
     BTManager btm = BTManager();
-
     btm.clearBuffer();
-    if (cmd is String)  btm.writeStr(cmd);
-    else if (cmd is Uint8List) btm.writeBytes(cmd);
-    else {
-      print("[ERROR] Wrong CMD argument type!");
-      return null;
+
+    if (cmd != null) {  // just wait for the response when cmd == null
+      if (cmd is String) btm.writeStr(cmd);
+      else if (cmd is Uint8List) btm.writeBytes(cmd);
+      else {
+        print("[ERROR] Wrong CMD argument type!");
+        return null;
+      }
     }
 
     await Future.delayed(new Duration(milliseconds: delayMs)); // give it some time
@@ -241,8 +242,6 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
       }
     }
 
-    printToTerminal("And now the fun begins!");
-
     // get OGN id from the BT device name:
     String btDeviceName = BTManager().connectedDevice.name;
     RegExp re = new RegExp(r'(\d{6})');
@@ -252,18 +251,20 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     //print("OGN id as str: ognIdStr");
     //print("OGN id in DEC: $cpuId");
 
-    String resp = await queryTheUnit('\$CMDVER\n', '\$VER'); // $VER;CUBE3;021338;2020-02-19*59
-    print("VER resp: $resp");
-    if(resp.indexOf(ognIdStr) < 0) {  // check device ids match
-      printToTerminal("Selected ('$ognIdStr') and remote ('${resp.split(';')[2]}') devices IDs do not match!");
-      return;
-    }
+    // sadly, this will never get a response in case firmware is broken:
+//    String resp = await queryTheUnit('\$CMDVER\n', '\$VER'); // $VER;CUBE3;021338;2020-02-19*59
+//    print("VER resp: $resp");
+//    if(resp.indexOf(ognIdStr) < 0) {  // check device ids match
+//      printToTerminal("Selected ('$ognIdStr') and remote ('${resp.split(';')[2]}') devices IDs do not match!");
+//      return;
+//    }
 
-    resp = await queryTheUnit('\$CMDRST\n', 'seconds', delayMs: 5000); // ## serialLoader.f103 ##
+    printToTerminal("Executing RST command now..");
+    String resp = await queryTheUnit('\$CMDRST\n', 'seconds', delayMs: 6000); // ## serialLoader.f103 ##
     print("RST resp: $resp");
 
     resp = await queryTheUnit('\nPROG', 'CPU ID?');
-    print("PROG resp: $resp");
+    printToTerminal("PROG resp: $resp $ognIdStr");
 
     // convert String ID to '\n' + 3 bytes:
     Uint8List bytes = new Uint8List(4);  // these 4 bytes will contain '\nCPUID'
@@ -274,7 +275,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     //print("OGN id as DEC bytes: $bytes");
 
     resp = await queryTheUnit(bytes, 'START ADDR?');  // expects '\n' + 3 bytes of lowest CPU id
-    print("CPUID resp: $resp");
+    printToTerminal("CPUID resp: $resp 0x08002800");
 
     bytes = new Uint8List(5);  // these 5 bytes will contain '\nADDR'
     buffer = bytes.buffer;
@@ -284,20 +285,51 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     //print("ADDR as DEC bytes: $bytes");
 
     resp = await queryTheUnit(bytes, 'LEN?');  // expects '\n' + 4 bytes 0x08002800 = 134227968 dec
-    print("START ADDR resp: $resp");
+    printToTerminal("START ADDR resp: $resp ${firmware.bytes.lengthInBytes}");
 
     bytes = new Uint8List(4);
     buffer = bytes.buffer;
     bdata = new ByteData.view(buffer);
     bdata.setUint32(0, firmware.bytes.lengthInBytes);
     bytes[0] = '\n'.codeUnitAt(0);
-    print("FW LEN ${firmware.bytes.lengthInBytes} B as DEC array: $bytes");
+    //print("FW LEN ${firmware.bytes.lengthInBytes} B as DEC array: $bytes");
 
     resp = await queryTheUnit(bytes, 'OK'); // expects '\n' + 3 bytes while length % 4 == 0
-    print("DATA LEN resp: $resp");
+    printToTerminal("DATA LEN resp: $resp");
 
-    // TODO flash process in a background thread..
+    printToTerminal("Data transfer: ");
+    // transfer data in 1kB blocks
+    const int BLOCK_SIZE = 1024;
+    int i = 0;
+    bool lastBlock = false;
+    while (!lastBlock) {
+      if ((i+1)*BLOCK_SIZE < firmware.bytes.lengthInBytes) {
+        bytes = firmware.bytes.sublist(i*BLOCK_SIZE, (i+1) * BLOCK_SIZE);
+      } else {
+        bytes = firmware.bytes.sublist(i*BLOCK_SIZE, firmware.bytes.lengthInBytes);
+        lastBlock = true;
+      }
 
+      bool res = BTManager().writeBytes(bytes);
+      if(res) printToTerminal('#', endLine: null);
+      else printToTerminal('X', endLine: null);
+
+      // give the uC time to store the bytes into flash; yes - it really needs this time:
+      if(!lastBlock) {
+        await Future.delayed(new Duration(milliseconds: 900));
+        i++; // nearly the most import thing here ;)
+      }
+    }
+    printToTerminal(''); // newline after the "progress bar"
+
+    resp = await queryTheUnit(bytes, "CRC", delayMs: 2000);  // CRC:237
+    printToTerminal("CRC resp: $resp");
+    if(resp != null) {
+      int ucCRC = int.parse(resp.trim().substring(resp.indexOf(':') + 1));
+      printToTerminal("Firmware CRC: ${firmware.crc}. This is${ucCRC == firmware.crc ? '' : " NOT"} a match!");
+    } else {
+      print("No reponse. Something went wrong.");
+    }
   }
 
 } // ~ class
