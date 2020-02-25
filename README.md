@@ -8,4 +8,7 @@ It shall help you with
 * examining tracks of your flights,
 * configuring your tracker unit.
 
-Currently it is at very early stage of development.. but give it time :)
+<img src="https://raw.githubusercontent.com/ibisek/ognCubeControl/master/propaganda/screenshots/Screenshot_20200225-102030.jpg" width="200" height="355"/>&nbsp;&nbsp;
+<img src="https://raw.githubusercontent.com/ibisek/ognCubeControl/master/propaganda/screenshots/Screenshot_20200225-102008.jpg" width="200" height="355"/>&nbsp;&nbsp;
+<img src="" width="200" height="355"/>&nbsp;&nbsp;
+<img src="https://raw.githubusercontent.com/ibisek/ognCubeControl/master/propaganda/screenshots/Screenshot_20200225-101951.jpg" width="200" height="355"/>&nbsp;&nbsp;
