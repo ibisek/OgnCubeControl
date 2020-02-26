@@ -37,6 +37,13 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
   }
 
   void onConnectIconClick(context) async {
+    await BTManager().refresh();
+
+    if(!BTManager().btEnabled) {
+      printToTerminal('Bluetooth disabled.');
+      return;
+    }
+
     if(BTManager().isConnected()) {
       BTManager().disconnect();
       printToTerminal("Disconnected.");
