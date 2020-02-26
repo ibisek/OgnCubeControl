@@ -23,6 +23,7 @@ class BTManager {
     return instance;
   }
 
+  bool btEnabled = false;
   bool btAvailable = false;
   List<BluetoothDevice> pairedBtDevices = List();
   BluetoothDevice selectedDevice, connectedDevice;
@@ -30,10 +31,11 @@ class BTManager {
   int selectedIndex = -1; // = none
 
   Future<bool> refresh() async {
+    btEnabled = await FlutterBluetoothSerial.instance.isEnabled;
     btAvailable = await FlutterBluetoothSerial.instance.isAvailable;
     print("[INFO] btAvailable: $btAvailable");
 
-    if(btAvailable) {
+    if(btEnabled && btAvailable) {
       pairedBtDevices = await FlutterBluetoothSerial.instance.getBondedDevices();
     }
 
