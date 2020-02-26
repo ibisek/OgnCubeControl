@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:cube_control/firmware.dart';
 import 'package:cube_control/firmwareUpdatePage.dart';
 import 'package:cube_control/deviceListPage.dart';
+import 'package:flutter_html/flutter_html.dart';
 
 void main() => runApp(MyApp());
 
@@ -72,15 +73,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     Row row = Row(
       children: <Widget>[
         Container(
-          padding: const EdgeInsets.only(left: 6, right: 8), //all(8),
+          padding: const EdgeInsets.only(left: 4, right: 10), //all(8),
           child: Icon(firmwares[i].isStoredLocally
               ? Icons.sd_storage
               : Icons.cloud_queue),
         ),
-        Text("${firmwares[i].type}\n${firmwares[i].date}",
-            textAlign: TextAlign.left),
         Expanded(
-          child: Text("${firmwares[i].title}", textAlign: TextAlign.center),
+          child: Html(
+            data: "${firmwares[i].type} | <b>${firmwares[i].date}</b><br>${firmwares[i].title}",
+          ),
         ),
         Icon(Icons.keyboard_arrow_right), //cloud_download | save_alt
       ],
@@ -101,6 +102,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       itemBuilder: (BuildContext context, int index) {
         return new GestureDetector(
           onTap: () => onListItemTap(index),
+          onLongPress: () => onListItemLongPress(index),
           child: getRow(index),
         );
       },
@@ -120,6 +122,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   onListItemTap(index) {
     Navigator.of(context)
         .pushNamed(FirmwareUpdatePage.routeName, arguments: firmwares[index]);
+  }
+
+  onListItemLongPress(index) {
+    // TODO xxx
   }
 
   void clearFirmwareList() {
