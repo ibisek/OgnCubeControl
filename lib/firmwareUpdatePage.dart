@@ -64,6 +64,18 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
       }
 
       printToTerminal("  Success! :)");
+
+      // read out current firmware version:
+      String resp = await queryTheUnit('\$CMDVER\n', '\$VER'); // $VER;CUBE3;021338;2020-02-19*59
+      //print("VER resp: $resp");
+      if(resp != null) {
+        String currentVersion = resp.split(';')[3].split('*')[0];
+        printToTerminal("  current firmware version: $currentVersion");
+
+        int ts = DateTime.parse("$currentVersion 00:00:01Z").toUtc().millisecondsSinceEpoch;
+        if(firmware.getTs() < ts)
+          printToTerminal("\nWARNING:\nSelected fw is OLDER than the current one!");
+      }
     }
 
     // flip the state:
@@ -250,14 +262,6 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     int ognId = int.parse(ognIdStr, radix: 16); // HEX str id to int
     //print("OGN id as str: ognIdStr");
     //print("OGN id in DEC: $cpuId");
-
-    // sadly, this will never get a response in case firmware is broken:
-//    String resp = await queryTheUnit('\$CMDVER\n', '\$VER'); // $VER;CUBE3;021338;2020-02-19*59
-//    print("VER resp: $resp");
-//    if(resp.indexOf(ognIdStr) < 0) {  // check device ids match
-//      printToTerminal("Selected ('$ognIdStr') and remote ('${resp.split(';')[2]}') devices IDs do not match!");
-//      return;
-//    }
 
     printToTerminal("Executing RST command now..");
     String resp = await queryTheUnit('\$CMDRST\n', 'seconds', delayMs: 6000); // ## serialLoader.f103 ##
