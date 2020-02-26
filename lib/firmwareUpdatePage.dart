@@ -74,13 +74,20 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
 
         int ts = DateTime.parse("$currentVersion 00:00:01Z").toUtc().millisecondsSinceEpoch;
         if(firmware.getTs() < ts)
-          printToTerminal("\nWARNING:\nSelected fw is OLDER than the current one!");
+          printToTerminal("\nWARNING:\nSelected fw is OLDER than the current one!\n");
       }
     }
 
     // flip the state:
     setState(() {
       btDeviceConnected = BTManager().isConnected();
+    });
+  }
+
+  /// Called by BTManager when bt devices disconnects itself.
+  void onBtDevDisconnected() {
+    setState(() {
+      btDeviceConnected = false;
     });
   }
 
@@ -99,6 +106,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     //TODO print firmware target, version and filename to console
 
     btDeviceConnected = BTManager().isConnected();  // get current actual state
+    BTManager().btDevDisconnectedNotification = onBtDevDisconnected;
 
     return Scaffold(
       appBar: AppBar(

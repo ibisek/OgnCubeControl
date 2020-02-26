@@ -17,6 +17,8 @@ class BTManager {
   BTManager._privateConstructor();
   static final BTManager instance = BTManager._privateConstructor();
 
+  var btDevDisconnectedNotification; // function to be called upon device disconnect
+
   factory BTManager() {
     return instance;
   }
@@ -87,6 +89,8 @@ class BTManager {
     }).onDone(() {
       print("[INFO] BT disconnected by remote peer");
       connectedDevice = null;
+
+      if(btDevDisconnectedNotification != null) btDevDisconnectedNotification();
     });
   }
 
