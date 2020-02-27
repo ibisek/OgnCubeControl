@@ -21,6 +21,8 @@ Widget catalog:
     https://flutter.dev/docs/development/ui/widgets/material
     https://material.io/components/
 
+    https://medium.com/flutter-community/flutter-layout-cheat-sheet-5363348d037e
+
 Flutter vs. Android diffs:
     https://flutter.dev/docs/get-started/flutter-for/android-devs#how-do-you-move-work-to-a-background-thread
 
@@ -34,6 +36,13 @@ Bluetooth:
         https://pub.dev/documentation/flutter_blue/0.4.0/
 
         https://medium.com/@pietrowicz.eric/bluetooth-low-energy-development-with-flutter-and-circuitpython-c7a25eafd3cf
+
+Local storage:
+    https://pub.dev/packages/localstorage
+    https://pub.dev/packages/shared_preferences
+
+    https://stackoverflow.com/questions/41369633/how-to-save-to-local-storage-using-flutter
+    https://medium.com/@lawrey/flutter-local-storage-ac2eaf1194be
 
 
 pauza:
