@@ -36,12 +36,12 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     terminal.clear();
   }
 
-  void onConnectIconClick(context) async {
+  Future<bool> onConnectIconClick(context) async {
     await BTManager().refresh();
 
     if(!BTManager().btEnabled) {
       printToTerminal('Bluetooth disabled.');
-      return;
+      return false;
     }
 
     if(BTManager().isConnected()) {
@@ -59,7 +59,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
           ),
         );
 
-        return;
+        return false;
       }
 
       terminal.clear();
@@ -67,7 +67,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
       bool res = await BTManager().connectTo(BTManager().selectedDevice);
       if (!res) {
         printToTerminal("  Connection failed.\n  Cannot continue.");
-        return;
+        return false;
       }
 
       printToTerminal("  Success! :)");
@@ -89,6 +89,8 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     setState(() {
       btDeviceConnected = BTManager().isConnected();
     });
+
+    return true;
   }
 
   /// Called by BTManager when bt devices disconnects itself.
@@ -172,7 +174,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
                         maxLines: null, //grow automatically
                         textAlign: TextAlign.left,
                         decoration: InputDecoration.collapsed(
-                            hintText: "Info about update process will appear here.."
+                            hintText: "Info about the update process will appear here."
                         ),
                         style: TextStyle(color: Colors.black, /*fontFamily: 'Courier',*/),
                       ),
@@ -251,8 +253,8 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
 
   void flashFirmware() async {
     if(!BTManager().isConnected()) {
-      printToTerminal("Not connected!");
-      return;
+      bool res = await onConnectIconClick(context);
+      if (!res) return;
     }
 
     printToTerminal("All right, hold my beer..");
