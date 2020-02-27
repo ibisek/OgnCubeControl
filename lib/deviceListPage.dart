@@ -148,7 +148,7 @@ class _DeviceListPageState extends State<DeviceListPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: refreshListView,
         tooltip:  'Refresh',
-        child: Icon(Icons.refresh),
+        child: Icon(Icons.cached),
       ),
     );
   }
