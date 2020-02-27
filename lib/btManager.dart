@@ -11,6 +11,7 @@
 
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'dart:typed_data';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class BTManager {
@@ -37,6 +38,27 @@ class BTManager {
 
     if(btEnabled && btAvailable) {
       pairedBtDevices = await FlutterBluetoothSerial.instance.getBondedDevices();
+
+      if(selectedDevice == null) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        String mac = prefs.getString("selectedBtDeviceMac");
+
+        if(mac != null) {
+          int i = 0;
+          for(BluetoothDevice dev in pairedBtDevices) {
+            if( dev.address == mac ) {
+              selectedDevice = dev;
+              selectedIndex = i;
+              break;
+            }
+            i++;
+          }
+          if(selectedDevice == null) {  // is not paired anymore or what?
+            prefs.remove("selectedBtDeviceMac");
+          }
+        }
+      }
+
     }
 
     // TODO load lastly selected and used device & highlight it (in the list view)
@@ -96,9 +118,12 @@ class BTManager {
     });
   }
 
-  void setSelectedIndex(int index) {
+  void setSelectedIndex(int index) async {
     selectedIndex = index;
     selectedDevice = pairedBtDevices[index];
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString("selectedBtDeviceMac", selectedDevice.address);
   }
 
   /// @return True if current device (if even selected) is connected
