@@ -138,11 +138,11 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
 //            tooltip: 'clear log area',
 //            onPressed: onDeleteIconClick,
 //          ),
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            tooltip: 'instructions',
-            onPressed: onHelpIconClick,
-          ),
+//          IconButton(
+//            icon: const Icon(Icons.help_outline),
+//            tooltip: 'instructions',
+//            onPressed: onHelpIconClick,
+//          ),
         ],
       ),
 
@@ -263,7 +263,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
       printToTerminal("Downloading file '${firmware.filename}'..");
       bool res = await downloadFirmware(firmware);
       if (!res) {
-        printToTerminal("  Connection failed.\n  Cannot continue.");
+        printToTerminal("  Connection failed.\n  Cannot proceed.");
         return;
 
       } else {
