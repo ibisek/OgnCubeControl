@@ -3,12 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:convert';
+import 'dart:io';
 import 'package:cube_control/firmware.dart';
 import 'package:cube_control/firmwareUpdatePage.dart';
 import 'package:cube_control/deviceListPage.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 void main() => runApp(MyApp());
+
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -124,8 +128,59 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         .pushNamed(FirmwareUpdatePage.routeName, arguments: firmwares[index]);
   }
 
-  onListItemLongPress(index) {
-    // TODO xxx
+  void onListItemLongPress(index) async {
+    String typeCaption;
+    switch(firmwares[index].type) {
+      case 'TOW':
+        typeCaption = "tow planes";
+        break;
+      case 'UAV':
+        typeCaption = "UAVs";
+        break;
+      case 'GLD':
+        typeCaption = "gliders";
+        break;
+    }
+
+    await showDialog<String> (
+      context: context,
+      builder: (BuildContext context) {
+        return SimpleDialog(
+          title: const Text('Firmware details'),
+          children: <Widget>[
+            Container(
+            padding: const EdgeInsets.only(left: 10, right: 10), //all(8),
+            child: Html(
+              data: """
+                <table>
+                  <tr>
+                    <td>Release date:</td>
+                    <td colspan='2'>${firmwares[index].date}</td>
+                  </tr>
+                  <tr>
+                    <td>Intended for:</td>
+                    <td colspan='2'>$typeCaption</td>
+                  </tr>
+                  <tr>
+                    <td>Title:</td>
+                    <td colspan='2'>${firmwares[index].title}</td>
+                  </tr>
+                  <tr>
+                    <td style='vertical-align:top;'>Description:</td>
+                    <td colspan='2'>${firmwares[index].notes}</td>
+                  </tr>
+                  <tr>
+                    <td>File size:</td>
+                    <td colspan='2'>${firmwares[index].len} bytes</td>
+                  </tr>
+                </table>
+              """,
+              ),
+            ),
+          ],
+        );
+      }
+    );
   }
 
   void clearFirmwareList() {
@@ -171,6 +226,29 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
   }
 
+  void onHelpIconClick(context) async {
+//    Scaffold.of(context).showSnackBar(SnackBar(
+//      content: Text("Long press the items to view details"),
+//      ),
+//    );
+
+    Fluttertoast.cancel();
+    Fluttertoast.showToast(
+        msg: "Long press the items to view details",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+    );
+  }
+
+  void launchUrl() async {
+    const url = 'https://ogn.ibisek.com';
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw "Could not launch '$url'";
+    }
+  }
+
   Widget getDrawer() {
     return Drawer(
       child: ListView(
@@ -208,16 +286,42 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 //            title: Text('My OGN Cubes'),
 //            subtitle: Text('Select active bluetooth connection'),
 //          ),
+//          ListTile(
+//            leading: Icon(Icons.library_books),
+//            title: Text('Logbook'),
+//            enabled: false,
+//          ),
+//          ListTile(
+//            leading: Icon(Icons.flight),
+//            title: Text('Flights'),
+//            enabled: false,
+//          ),
+//          ListTile(
+//            leading: Image(
+//              image: AssetImage('assets/images/settings.png '),
+//            ),
+//            title: Text('Settings'),
+//            enabled: false,
+//          ),
+//          ListTile(
+//            leading: Icon(Icons.move_to_inbox), //gesture
+//            title: Text('Tracker configuration'),
+//            enabled: false,
+//            onTap: launchUrl,
+//          ),
           ListTile(
-            leading: Icon(Icons.library_books),
-            title: Text('Logbook'),
-            enabled: false,
+            leading: Icon(Icons.launch), //gesture
+            title: Text('News & updates'),
+            enabled: true,
+            onTap: launchUrl,
           ),
           ListTile(
-            leading: Icon(Icons.flight),
-            title: Text('Flights'),
-            enabled: false,
-          ),
+            leading: Icon(Icons.exit_to_app), //gesture
+            title: Text('Exit'),
+            enabled: true,
+            onTap: () { exit(0); },
+//            onTap: () {SystemChannels.platform.invokeMethod('SystemNavigator.pop'); },
+    ),
         ],
       ),
     );
@@ -228,6 +332,19 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        actions: [
+          Builder(  // this is here to get the right 'context' for the onPressed action
+          builder: (context) =>
+            Center(
+              child:
+              IconButton(
+                icon: const Icon(Icons.help_outline),
+                tooltip: 'instructions',
+                onPressed: () => onHelpIconClick(context),
+              ),
+            ),
+          ),
+        ],
       ),
       drawer: getDrawer(),
       body: getBody(),
