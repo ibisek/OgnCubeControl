@@ -6,7 +6,8 @@ It shall help you with
 * updating firmware,
 * downloading and analysing flight logs,
 * examining tracks of your flights,
-* configuring your tracker unit.
+* configuring your tracker unit,
+* and perhaps also relationship issues.
 
 Firmware flashing is the first working feature! :)
 
