@@ -67,7 +67,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         children: <Widget>[
           CircularProgressIndicator(),
           //LinearProgressIndicator(),
-          Text('\nChecking available firmwares..'),
+          Text('\nChecking on available firmwares..'),
         ],
       ),
     );
@@ -218,7 +218,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       });
     } else {
       Fluttertoast.showToast(
-        msg: "Can not load firmware list. Are you online?",
+        msg: "Can not load firmware list.\nAre you online?",
         toastLength: Toast.LENGTH_LONG,
       );
 
