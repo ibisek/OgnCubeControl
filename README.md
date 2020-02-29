@@ -13,5 +13,7 @@ Firmware flashing is the first working feature! :)
 
 <img src="https://raw.githubusercontent.com/ibisek/ognCubeControl/master/propaganda/screenshots/Screenshot_20200225-102030.jpg" width="200" height="355"/>&nbsp;&nbsp;
 <img src="https://raw.githubusercontent.com/ibisek/ognCubeControl/master/propaganda/screenshots/Screenshot_20200225-102018.jpg" width="200" height="355"/>&nbsp;&nbsp;
-<img src="https://raw.githubusercontent.com/ibisek/ognCubeControl/master/propaganda/screenshots/Screenshot_20200225-102008.jpg" width="200" height="355"/>&nbsp;&nbsp;
+<img src="https://raw.githubusercontent.com/ibisek/ognCubeControl/master/propaganda/screenshots/Screenshot_20200228-132220.jpg" width="200" height="355"/>&nbsp;&nbsp;
 <img src="https://raw.githubusercontent.com/ibisek/ognCubeControl/master/propaganda/screenshots/Screenshot_20200225-101951.jpg" width="200" height="355"/>&nbsp;&nbsp;
+<img src="https://raw.githubusercontent.com/ibisek/ognCubeControl/master/propaganda/screenshots/Screenshot_20200228-132301.jpg" width="200" height="355"/>&nbsp;&nbsp;
+
