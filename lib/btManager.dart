@@ -61,8 +61,6 @@ class BTManager {
 
     }
 
-    // TODO load lastly selected and used device & highlight it (in the list view)
-
     print("[INFO] btInit() finished");
     return true;
   }

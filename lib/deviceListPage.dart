@@ -45,8 +45,6 @@ class _DeviceListPageState extends State<DeviceListPage> {
   void populateListView() async {
     pairedDevices.clear();
     if(BTManager.instance.pairedBtDevices.length > 0) {
-//      selectedIndex = BTManager.instance  // TODO restore selected index
-
       for(BluetoothDevice dev in BTManager.instance.pairedBtDevices) {
         if(dev.name != null && dev.name.isNotEmpty) pairedDevices.add(new DeviceListItem(dev.name, dev.address));
         else pairedDevices.add(new DeviceListItem(dev.address, null));

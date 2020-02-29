@@ -112,7 +112,6 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
         .of(context)
         .settings
         .arguments;
-    //TODO print firmware target, version and filename to console
 
     btDeviceConnected = BTManager().isConnected();  // get current actual state
     BTManager().btDevDisconnectedNotification = onBtDevDisconnected;
