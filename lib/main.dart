@@ -193,7 +193,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     clearFirmwareList();
 
     String dataURL =
-        "https://raw.githubusercontent.com/ibisek/ognCube/master/releases/firmwares.json";
+        "https://raw.githubusercontent.com/ibisek/ognCubeReleases/master/releases/firmwares.json";
 
     http.Response response;
     try {
