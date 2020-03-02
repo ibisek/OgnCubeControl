@@ -1,3 +1,4 @@
+import 'package:cube_control/cubeInterface.dart';
 ///
 /// Manages all affairs regarding bluetooth.
 /// Keeps list of paired devices.
@@ -9,8 +10,8 @@
 ///
 
 
-import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'dart:typed_data';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
