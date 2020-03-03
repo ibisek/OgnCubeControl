@@ -3,4 +3,5 @@
 .packages
 .flutter-plugins
 .flutter-plugins-dependencies
+build/
 pubspec.log
