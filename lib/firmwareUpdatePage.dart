@@ -314,7 +314,12 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     printToTerminal("CRC resp: $resp");
     if(resp != null) {
       int ucCRC = int.parse(resp.trim().substring(resp.indexOf(':') + 1));
-      printToTerminal("Firmware CRC: ${firmware.crc}. This is${ucCRC == firmware.crc ? '' : " NOT"} a match!");
+      if(ucCRC == firmware.crc) {
+        printToTerminal("Firmware CRC: ${firmware.crc}. This is a match.\n\nWe are done! :)");
+      } else {
+        printToTerminal("Firmware CRC: ${firmware.crc}. This is wrong. Try reflashing.");
+      }
+
     } else {
       print("No reponse. Something went wrong.");
     }
