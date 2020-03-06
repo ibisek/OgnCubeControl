@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:typed_data';
+import 'package:screen/screen.dart';
 
 import 'package:cube_control/firmware.dart';
 import 'package:cube_control/btManager.dart';
 import 'package:cube_control/deviceListPage.dart';
-
 
 class FirmwareUpdatePage extends StatefulWidget {
   FirmwareUpdatePage({Key key, this.title}) : super(key: key);
@@ -241,6 +241,8 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
       }
     }
 
+    Screen.keepOn(true);  // keep the screen on - not to interrupt the flashing process!
+
     // get OGN id from the BT device name:
     String ognIdStr = CubeInterface().getOgnIdStr();
     int ognId = CubeInterface().getOgnId();
@@ -323,6 +325,8 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     } else {
       print("No reponse. Something went wrong.");
     }
+
+    Screen.keepOn(false);
   }
 
 } // ~ class
