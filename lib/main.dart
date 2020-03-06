@@ -1,4 +1,5 @@
 import 'package:cube_control/btManager.dart';
+import 'package:cube_control/logbookPage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:fluttertoast/fluttertoast.dart';
@@ -29,6 +30,9 @@ class MyApp extends StatelessWidget {
             FirmwareUpdatePage(title: 'Firmware Upload'),
         DeviceListPage.routeName: (BuildContext context) =>
             DeviceListPage(title: 'Paired Devices'),
+        LogbookPage.routeName: (BuildContext context) =>
+            LogbookPage(title: 'Logbook'),
+
       },
     );
   }
@@ -289,7 +293,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 //          ListTile(
 //            leading: Icon(Icons.library_books),
 //            title: Text('Logbook'),
-//            enabled: false,
+//            enabled: true,
+//            onTap: () {
+//              Navigator.of(context).pushNamed(LogbookPage.routeName);
+//            },
 //          ),
 //          ListTile(
 //            leading: Icon(Icons.flight),

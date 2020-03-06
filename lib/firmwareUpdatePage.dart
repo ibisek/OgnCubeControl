@@ -1,13 +1,14 @@
 
+import 'package:cube_control/cubeInterface.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:typed_data';
+import 'package:screen/screen.dart';
 
 import 'package:cube_control/firmware.dart';
 import 'package:cube_control/btManager.dart';
 import 'package:cube_control/deviceListPage.dart';
-
 
 class FirmwareUpdatePage extends StatefulWidget {
   FirmwareUpdatePage({Key key, this.title}) : super(key: key);
@@ -73,7 +74,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
       printToTerminal("  Success! :)");
 
       // read out current firmware version:
-      String resp = await queryTheUnit('\$CMDVER\n', '\$VER'); // $VER;CUBE3;021338;2020-02-19*59
+      String resp = await CubeInterface().query('\$CMDVER\n', '\$VER'); // $VER;CUBE3;021338;2020-02-19*59
       //print("VER resp: $resp");
       if(resp != null) {
         String currentVersion = resp.split(';')[3].split('*')[0];
@@ -220,36 +221,6 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     return false;
   }
 
-  /// Sends a COMMAND to unit and awaits for EXPECTed string in the line.
-  /// @param cmd: command either as String or Uint8List
-  /// @param expect: a string to expect in the response line
-  /// @param delayMs: optional, default 400ms
-  Future<String> queryTheUnit(dynamic cmd, String expect, {int delayMs=400}) async {
-    BTManager btm = BTManager();
-    btm.clearBuffer();
-
-    if (cmd != null) {  // just wait for the response when cmd == null
-      if (cmd is String) btm.writeStr(cmd);
-      else if (cmd is Uint8List) btm.writeBytes(cmd);
-      else {
-        print("[ERROR] Wrong CMD argument type!");
-        return null;
-      }
-    }
-
-    await Future.delayed(new Duration(milliseconds: delayMs)); // give it some time
-
-    String response;
-
-    int maxLoops = 123;
-    do {
-      response = btm.readLine();
-    } while(--maxLoops > 0 && (response == null || response.indexOf(expect) < 0));
-
-    if (maxLoops > 0) return response;
-    else return null;
-  }
-
   void flashFirmware() async {
     if(!BTManager().isConnected()) {
       bool res = await onConnectIconClick(context);
@@ -270,20 +241,19 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
       }
     }
 
+    Screen.keepOn(true);  // keep the screen on - not to interrupt the flashing process!
+
     // get OGN id from the BT device name:
-    String btDeviceName = BTManager().connectedDevice.name;
-    RegExp re = new RegExp(r'(\d{6})');
-    var match = re.firstMatch(btDeviceName);
-    String ognIdStr = btDeviceName.substring(match.start, match.end);
-    int ognId = int.parse(ognIdStr, radix: 16); // HEX str id to int
+    String ognIdStr = CubeInterface().getOgnIdStr();
+    int ognId = CubeInterface().getOgnId();
     //print("OGN id as str: ognIdStr");
     //print("OGN id in DEC: $cpuId");
 
     printToTerminal("Executing RST command now..");
-    String resp = await queryTheUnit('\$CMDRST\n', 'seconds', delayMs: 6000); // ## serialLoader.f103 ##
+    String resp = await CubeInterface().query(CubeInterface.CMD_RST, 'seconds', delayMs: 6000); // ## serialLoader.f103 ##
     print("RST resp: $resp");
 
-    resp = await queryTheUnit('\nPROG', 'CPU ID?');
+    resp = await CubeInterface().query('\nPROG', 'CPU ID?');
     printToTerminal("PROG resp: $resp $ognIdStr");
 
     // convert String ID to '\n' + 3 bytes:
@@ -294,7 +264,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     bytes[0] = '\n'.codeUnitAt(0);
     //print("OGN id as DEC bytes: $bytes");
 
-    resp = await queryTheUnit(bytes, 'START ADDR?');  // expects '\n' + 3 bytes of lowest CPU id
+    resp = await CubeInterface().query(bytes, 'START ADDR?');  // expects '\n' + 3 bytes of lowest CPU id
     printToTerminal("CPUID resp: $resp 0x08002800");
 
     bytes = new Uint8List(5);  // these 5 bytes will contain '\nADDR'
@@ -304,7 +274,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     bytes[0] = '\n'.codeUnitAt(0);
     //print("ADDR as DEC bytes: $bytes");
 
-    resp = await queryTheUnit(bytes, 'LEN?');  // expects '\n' + 4 bytes 0x08002800 = 134227968 dec
+    resp = await CubeInterface().query(bytes, 'LEN?');  // expects '\n' + 4 bytes 0x08002800 = 134227968 dec
     printToTerminal("START ADDR resp: $resp ${firmware.bytes.lengthInBytes}");
 
     bytes = new Uint8List(4);
@@ -314,7 +284,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     bytes[0] = '\n'.codeUnitAt(0);
     //print("FW LEN ${firmware.bytes.lengthInBytes} B as DEC array: $bytes");
 
-    resp = await queryTheUnit(bytes, 'OK'); // expects '\n' + 3 bytes while length % 4 == 0
+    resp = await CubeInterface().query(bytes, 'OK'); // expects '\n' + 3 bytes while length % 4 == 0
     printToTerminal("DATA LEN resp: $resp");
 
     printToTerminal("Data transfer: ");
@@ -331,7 +301,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
       }
 
       bool res = BTManager().writeBytes(bytes);
-      if(res) printToTerminal('#', endLine: null);
+      if(res) printToTerminal('#', endLine: null);  // 1kB / # progressbar
       else printToTerminal('X', endLine: null);
 
       // give the uC time to store the bytes into flash; yes - it really needs this time:
@@ -342,14 +312,21 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     }
     printToTerminal(''); // newline after the "progress bar"
 
-    resp = await queryTheUnit(bytes, "CRC", delayMs: 2000);  // CRC:237
+    resp = await CubeInterface().query(bytes, "CRC", delayMs: 2000);  // CRC:237
     printToTerminal("CRC resp: $resp");
     if(resp != null) {
       int ucCRC = int.parse(resp.trim().substring(resp.indexOf(':') + 1));
-      printToTerminal("Firmware CRC: ${firmware.crc}. This is${ucCRC == firmware.crc ? '' : " NOT"} a match!");
+      if(ucCRC == firmware.crc) {
+        printToTerminal("Firmware CRC: ${firmware.crc}. This is a match.\n\nWe are done! :)");
+      } else {
+        printToTerminal("Firmware CRC: ${firmware.crc}. This is wrong. Try reflashing.");
+      }
+
     } else {
       print("No reponse. Something went wrong.");
     }
+
+    Screen.keepOn(false);
   }
 
 } // ~ class
