@@ -290,14 +290,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 //            title: Text('My OGN Cubes'),
 //            subtitle: Text('Select active bluetooth connection'),
 //          ),
-//          ListTile(
-//            leading: Icon(Icons.library_books),
-//            title: Text('Logbook'),
-//            enabled: true,
-//            onTap: () {
-//              Navigator.of(context).pushNamed(LogbookPage.routeName);
-//            },
-//          ),
+          ListTile(
+            leading: Icon(Icons.library_books),
+            title: Text('Logbook'),
+            enabled: true,
+            onTap: () {
+              Navigator.of(context).pushNamed(LogbookPage.routeName);
+            },
+          ),
 //          ListTile(
 //            leading: Icon(Icons.flight),
 //            title: Text('Flights'),
