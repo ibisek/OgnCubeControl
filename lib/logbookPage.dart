@@ -1,3 +1,4 @@
+
 import 'package:cube_control/btManager.dart';
 import 'package:cube_control/cubeInterface.dart';
 import 'package:cube_control/logBook.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:cube_control/deviceListPage.dart';
 import 'package:intl/intl.dart';
+import 'airfieldManager.dart';
 
 class LogbookPage extends StatefulWidget {
   LogbookPage({Key key, this.title}) : super(key: key);
@@ -44,7 +46,7 @@ class _LogbookPageState extends State<LogbookPage> {
     Text text;
     if (e.acc.length != 0)
       text = Text(
-          "accX <${e.acc[0].toStringAsFixed(1)}; ${e.acc[1].toStringAsFixed(1)}>\naccY <${e.acc[2].toStringAsFixed(1)}; ${e.acc[3].toStringAsFixed(1)}>\naccZ <${e.acc[4].toStringAsFixed(1)}; ${e.acc[5].toStringAsFixed(1)}>");
+          "min/max acc\nX <${e.acc[0].toStringAsFixed(1)}; ${e.acc[1].toStringAsFixed(1)}>\nY <${e.acc[2].toStringAsFixed(1)}; ${e.acc[3].toStringAsFixed(1)}>\nZ <${e.acc[4].toStringAsFixed(1)}; ${e.acc[5].toStringAsFixed(1)}>");
     else
       text = Text('\nNo ACC data.');
 
@@ -94,7 +96,7 @@ class _LogbookPageState extends State<LogbookPage> {
                   child: Icon(Icons.flight_takeoff),
                 ),
                 Text(
-                  "${timeFormat.format(e.takeOff)} | ${e.takeOffPlaceName}",
+                  "${timeFormat.format(e.takeOff)} ${e.takeOffLocationCode}",
                   style: TextStyle(
                     fontSize: 20,
                   ),
@@ -109,7 +111,7 @@ class _LogbookPageState extends State<LogbookPage> {
                   child: Icon(Icons.flight_land),
                 ),
                 Text(
-                  "${timeFormat.format(e.landing)} | ${e.landingPlaceName}",
+                  "${timeFormat.format(e.landing)} ${e.landingLocationCode}",
                   style: TextStyle(
                     fontSize: 20,
                   ),
@@ -186,6 +188,7 @@ class _LogbookPageState extends State<LogbookPage> {
   void onDownloadIconClick(context) async {
     if (busy) return;
 
+    AirfieldManager().init();
     await BTManager().refresh();
 
     if (!BTManager().btEnabled || !BTManager().btAvailable) {
@@ -280,8 +283,7 @@ class _LogbookPageState extends State<LogbookPage> {
       double landingLat = double.parse(landingLatStr);
       double landingLon = double.parse(landingLonStr);
 
-      LogbookEntry e = new LogbookEntry(ognId, takeOff, landing, takeOffLat,
-          takeOffLon, landingLat, landingLon);
+      LogbookEntry e = new LogbookEntry(ognId, takeOff, landing, takeOffLat, takeOffLon, landingLat, landingLon);
       e.acc = acc;
       if (logbookEntries.indexOf(e) < 0) logbookEntries.add(e);
     }
