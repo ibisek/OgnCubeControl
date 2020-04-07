@@ -13,7 +13,7 @@ class LogbookEntry {
   DateTime takeOff, landing;
   double takeOffLat, takeOffLon, landingLat, landingLon;  // [deg]
   int duration; // [s]
-  List<double> acc = List(); // recorded min-max accelerations X,Y,Z (units with accelerometer only)
+  List<double> acc = List(); // recorded min-max accelerations X,Y,Z (CUBEs with accelerometer only)
 
   // values looked-up based on location:
   String takeOffLocationCode;
@@ -65,7 +65,10 @@ class LogbookEntry {
     m['landingLat'] = landingLat;
     m['landingLon'] = landingLon;
     m['duration'] = duration;
-    m['acc'] = acc;
+    m['acc'] = jsonEncode(acc);
+
+    m['takeoffLocCode'] = takeOffLocationCode;
+    m['landingLocCode'] = landingLocationCode;
 
     return jsonEncode(m);
   }
@@ -93,7 +96,18 @@ class LogbookEntry {
       m['landingLon'],
     );
 
-    e.acc = m['acc'];
+    if (m.containsKey('acc')) {
+      if(m['acc'] is String) {
+        var l = jsonDecode(m['acc']);
+        e.acc = l.cast<double>();
+
+      }  else {
+        e.acc = m['acc'].cast<double>();
+      }
+    }
+
+    e.takeOffLocationCode = m['takeoffLocCode'];
+    e.landingLocationCode = m['landingLocCode'];
 
     return e;
   }

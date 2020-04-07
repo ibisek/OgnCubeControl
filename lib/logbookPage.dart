@@ -1,12 +1,16 @@
 
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cube_control/deviceListPage.dart';
+import 'package:intl/intl.dart';
+
 import 'package:cube_control/btManager.dart';
 import 'package:cube_control/cubeInterface.dart';
 import 'package:cube_control/logBook.dart';
-import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:cube_control/deviceListPage.dart';
-import 'package:intl/intl.dart';
-import 'airfieldManager.dart';
+import 'package:cube_control/airfieldManager.dart';
+
 
 class LogbookPage extends StatefulWidget {
   LogbookPage({Key key, this.title}) : super(key: key);
@@ -26,7 +30,7 @@ class _LogbookPageState extends State<LogbookPage> {
   @override
   void initState() {
     super.initState();
-    loadLogbookFromDb();
+    loadLogbook();
   }
 
   Widget getProgressDialog() {
@@ -181,8 +185,34 @@ class _LogbookPageState extends State<LogbookPage> {
 //        .pushNamed(FirmwareUpdatePage.routeName, arguments: firmwares[index]);
   }
 
-  loadLogbookFromDb() async {
-    // TODO load from local storage
+  loadLogbook() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (prefs. containsKey('logbook')) {
+      List<String> l = prefs.getStringList('logbook');
+
+      logbookEntries.clear();
+
+      setState(() {
+        for (String jsonStr in l) {
+          LogbookEntry e = LogbookEntry.fromJson(jsonStr);
+          logbookEntries.add(e);
+        }
+      });
+    }
+  }
+
+  void saveLogbook() async {
+    if (logbookEntries.length == 0) return;
+
+    List<String> l = List();
+
+    for (LogbookEntry e in logbookEntries) {
+      String s = e.toJson();
+      l.add(s);
+    }
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setStringList('logbook', l);
   }
 
   void onDownloadIconClick(context) async {
@@ -290,7 +320,7 @@ class _LogbookPageState extends State<LogbookPage> {
 
     logbookEntries.sort((a, b) => b.compareTo(a));
 
-    // TODO save to local storage
+    saveLogbook();
 
     setState(() {
       busy = false;
