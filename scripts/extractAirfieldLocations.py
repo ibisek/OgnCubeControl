@@ -5,7 +5,7 @@ from os import listdir
 from os.path import isfile, join
 
 SRC_DIR = '/home/jaja/wqz/prog/android/vfrManual/app/src/main/assets/json'
-OUT_FILE = '/home/jaja/wqz/prog/android/ognCubeControl/assets/airfields.json'
+OUT_FILE = '/home/jaja/wqz/prog/android/ognCubeControl/assets/res/airfields.json'
 
 if __name__ == '__main__':
 
