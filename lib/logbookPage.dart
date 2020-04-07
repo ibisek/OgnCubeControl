@@ -10,6 +10,7 @@ import 'package:cube_control/btManager.dart';
 import 'package:cube_control/cubeInterface.dart';
 import 'package:cube_control/logBook.dart';
 import 'package:cube_control/airfieldManager.dart';
+import 'appDrawer.dart';
 
 
 class LogbookPage extends StatefulWidget {
@@ -345,6 +346,7 @@ class _LogbookPageState extends State<LogbookPage> {
           ),
         ],
       ),
+      drawer: getAppDrawer(context),
       body: getBody(),
     );
   }

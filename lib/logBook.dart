@@ -76,16 +76,6 @@ class LogbookEntry {
   factory LogbookEntry.fromJson(String jsonStr) {
     Map<String, dynamic> m = jsonDecode(jsonStr);
 
-//    return new LogbookEntry(
-//      ognId: m['ognId'],
-//      takeOff: DateTime.parse(m['takeoff']),
-//      landing: DateTime.parse(m['landing']),
-//      takeOffLat: m['takeoffLat'],
-//      takeOffLon: m['takeoffLon'],
-//      landingLat: m['landingLat'],
-//      landingLon: m['landingLon'],
-//    );
-
     LogbookEntry e = new LogbookEntry(
       m['ognId'],
       DateTime.parse(m['takeoff']),

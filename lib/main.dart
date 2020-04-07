@@ -9,7 +9,7 @@ import 'package:cube_control/firmware.dart';
 import 'package:cube_control/firmwareUpdatePage.dart';
 import 'package:cube_control/deviceListPage.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'appDrawer.dart';
 
 
 void main() => runApp(MyApp());
@@ -26,6 +26,8 @@ class MyApp extends StatelessWidget {
       ),
       home: MyHomePage(title: 'Available Firmwares'),
       routes: <String, WidgetBuilder>{
+        MyHomePage.routeName:(BuildContext context) =>
+            MyHomePage(title: 'Available Firmwares'),
         FirmwareUpdatePage.routeName: (BuildContext context) =>
             FirmwareUpdatePage(title: 'Firmware Upload'),
         DeviceListPage.routeName: (BuildContext context) =>
@@ -39,6 +41,8 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
+  static const routeName = '/firmwaresList';
+
   MyHomePage({Key key, this.title}) : super(key: key);
 
   final String title;
@@ -71,7 +75,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         children: <Widget>[
           CircularProgressIndicator(),
           //LinearProgressIndicator(),
-          Text('\nChecking on available firmwares..'),
+          Text('\nChecking on newest firmwares..'),
         ],
       ),
     );
@@ -244,96 +248,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     );
   }
 
-  void launchUrl() async {
-    const url = 'https://ogn.ibisek.com';
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw "Could not launch '$url'";
-    }
-  }
-
-  Widget getDrawer() {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
-          DrawerHeader(
-            decoration: BoxDecoration(
-              color: Colors.blue,
-            ),
-            child: Text(
-              'OGN Cube Control',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-              ),
-            ),
-          ),
-          ListTile(
-            leading: Icon(Icons.settings_bluetooth),
-            title: Text('Paired devices'),
-            onTap: () {
-              Navigator.of(context).pushNamed(DeviceListPage.routeName);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.system_update_alt),
-            title: Text('Firmware updates'),
-            selected: true,
-            onTap: () {
-              Navigator.pop(context);
-            }, // close the drawer
-          ),
-//          ListTile(
-//            leading: FlutterLogo(size: 40.0),
-//            title: Text('My OGN Cubes'),
-//            subtitle: Text('Select active bluetooth connection'),
-//          ),
-          ListTile(
-            leading: Icon(Icons.library_books),
-            title: Text('Logbook'),
-            enabled: true,
-            onTap: () {
-              Navigator.of(context).pushNamed(LogbookPage.routeName);
-            },
-          ),
-//          ListTile(
-//            leading: Icon(Icons.flight),
-//            title: Text('Flights'),
-//            enabled: false,
-//          ),
-//          ListTile(
-//            leading: Image(
-//              image: AssetImage('assets/images/settings.png '),
-//            ),
-//            title: Text('Settings'),
-//            enabled: false,
-//          ),
-//          ListTile(
-//            leading: Icon(Icons.move_to_inbox), //gesture
-//            title: Text('Tracker configuration'),
-//            enabled: false,
-//            onTap: launchUrl,
-//          ),
-          ListTile(
-            leading: Icon(Icons.launch), //gesture
-            title: Text('News & updates'),
-            enabled: true,
-            onTap: launchUrl,
-          ),
-          ListTile(
-            leading: Icon(Icons.exit_to_app), //gesture
-            title: Text('Exit'),
-            enabled: true,
-            onTap: () { exit(0); },
-//            onTap: () {SystemChannels.platform.invokeMethod('SystemNavigator.pop'); },
-    ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -353,7 +267,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           ),
         ],
       ),
-      drawer: getDrawer(),
+      drawer: getAppDrawer(context),
       body: getBody(),
       floatingActionButton: FloatingActionButton(
         onPressed: loadFirmwareList,
