@@ -1,6 +1,8 @@
 
 import 'dart:convert';
 
+import 'package:cube_control/airfieldManager.dart';
+
 
 class LogbookEntry {
   String id; // unique generated ID - shall be unique world-wide ;)
@@ -14,8 +16,8 @@ class LogbookEntry {
   List<double> acc = List(); // recorded min-max accelerations X,Y,Z (units with accelerometer only)
 
   // values looked-up based on location:
-  String takeOffPlaceName;
-  String landingPlaceName;
+  String takeOffLocationCode;
+  String landingLocationCode;
 
   // misc. values:
   String pic;   // name/id of this flight's pic
@@ -34,9 +36,9 @@ class LogbookEntry {
     ts = takeOff.millisecondsSinceEpoch ~/ 1000; // [s]
     id = "$ognId-$ts";
 
-    // TODO vyhledat nejblizsi letiste, ul plochu ci dedinku
-    takeOffPlaceName = "LKKA";
-    landingPlaceName = "LKKA";
+    // find nearest airfield, UL strip or town:
+    takeOffLocationCode = AirfieldManager().getNearest(takeOffLat, takeOffLon);
+    landingLocationCode = AirfieldManager().getNearest(takeOffLat, takeOffLon);
   }
 
   @override
@@ -103,7 +105,7 @@ class LogbookEntry {
     temp = temp - min * 60;  // remaining seconds
     if (temp > 30) min += 1;
 
-    print("$duration | $hours h $min m");
+    //print("$duration | $hours h $min m");
 
     if (hours > 0)
       return "$hoursᵒ $min'";
