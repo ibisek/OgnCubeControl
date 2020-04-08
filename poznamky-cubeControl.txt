@@ -70,3 +70,18 @@ Fluttertoast.showToast(
   textColor: Colors.white,
   fontSize: 16.0
 );
+
+--
+
+import 'dart:convert';
+import 'json.dart';
+
+int calculate() {
+  final String jsonString = '{"number": 5}';
+  final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
+  JsonObject jsonObject = JsonObject.fromJson(jsonMap);
+  int number = jsonObject.number;
+
+  return number * 6;
+}
+
