@@ -1,4 +1,6 @@
 
+import 'dart:convert';
+
 import 'package:cube_control/cubeInterface.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -212,10 +214,40 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
       printToTerminal("  got ${response.contentLength} bytes");
       fw.setBytes(response.bodyBytes);
 
+      String key = firmware.filename;
+      String bytesEncoded = base64Encode(fw.bytes);
+
+      Uint8List bytes2 = base64Decode(bytesEncoded);
+      bool res = fw.bytes == bytes2;
+
       // TODO store firmware locally
       // firmware.isStoredLocally = true;
 
       return true;
+    }
+
+    return false;
+  }
+
+  Future<bool> downloadFirmwareBinFile() async {
+    if(firmware == null) {
+      printToTerminal("Unknown firmware. This should never happen. If it did, please let the author know how!");
+      return false;
+    }
+
+    if(firmware.bytes != null) {
+      printToTerminal("File '${firmware.filename}' already downloadedflight.");
+      return true;
+    }
+
+    printToTerminal("Downloading file '${firmware.filename}'..");
+    bool res = await downloadFirmware(firmware);
+    if (res) {
+      printToTerminal("  this is good.");
+      return true;
+
+    } else {
+      printToTerminal("  Connection failed.\n  Cannot proceed.");
     }
 
     return false;
@@ -227,19 +259,11 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
       if (!res) return;
     }
 
+    bool firmwareDownloaded = await downloadFirmwareBinFile();
+    if (!firmwareDownloaded) return;
+
     printToTerminal("All right, hold my beer..");
 
-    if(firmware != null && firmware.bytes == null) {
-      printToTerminal("Downloading file '${firmware.filename}'..");
-      bool res = await downloadFirmware(firmware);
-      if (!res) {
-        printToTerminal("  Connection failed.\n  Cannot proceed.");
-        return;
-
-      } else {
-        printToTerminal("  this is good.");
-      }
-    }
 
     Screen.keepOn(true);  // keep the screen on - not to interrupt the flashing process!
 
