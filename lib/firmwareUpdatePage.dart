@@ -1,8 +1,8 @@
 
 import 'package:cube_control/cubeInterface.dart';
+import 'package:cube_control/firmwareManager.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 import 'package:screen/screen.dart';
 
@@ -200,46 +200,25 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     if(endLine != null) terminal.text += endLine;
   }
 
-  Future<bool> downloadFirmware(Firmware fw) async {
-    http.Response response;
-    try {
-      response = await http.get(fw.url);
-    } catch (exception) {
-      // nix
-    }
-
-    if (response != null && response.statusCode == 200) {
-      printToTerminal("  got ${response.contentLength} bytes");
-      fw.setBytes(response.bodyBytes);
-
-      // TODO store firmware locally
-      // firmware.isStoredLocally = true;
-
-      return true;
-    }
-
-    return false;
-  }
-
   void flashFirmware() async {
     if(!BTManager().isConnected()) {
       bool res = await onConnectIconClick(context);
       if (!res) return;
     }
 
+    if (!firmware.isStoredLocally) {
+      printToTerminal("File '${firmware.filename}' is not stored in the phone. Go to back and refresh the firmware list.");
+      return;
+    }
+
+    bool res = await FirmwareManager.instance.loadFirmwareBytes(firmware);
+    if(!res) {
+      printToTerminal('Could not load firmware bin file from local storage! Go to back and try to refresh the firmware list.');
+      return;
+    }
+
     printToTerminal("All right, hold my beer..");
 
-    if(firmware != null && firmware.bytes == null) {
-      printToTerminal("Downloading file '${firmware.filename}'..");
-      bool res = await downloadFirmware(firmware);
-      if (!res) {
-        printToTerminal("  Connection failed.\n  Cannot proceed.");
-        return;
-
-      } else {
-        printToTerminal("  this is good.");
-      }
-    }
 
     Screen.keepOn(true);  // keep the screen on - not to interrupt the flashing process!
 

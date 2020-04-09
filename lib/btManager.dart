@@ -69,6 +69,9 @@ class BTManager {
   /// Connects to specified device.
   /// @return True if successful
   Future<bool> connectTo(BluetoothDevice dev) async {
+    if (dev == null)
+      return false;
+
     if (identical(dev, connectedDevice) && connectedDevice.isConnected) {
       return true;
 

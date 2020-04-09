@@ -1,6 +1,8 @@
 
 import 'dart:convert';
 
+import 'package:cube_control/airfieldManager.dart';
+
 
 class LogbookEntry {
   String id; // unique generated ID - shall be unique world-wide ;)
@@ -11,11 +13,11 @@ class LogbookEntry {
   DateTime takeOff, landing;
   double takeOffLat, takeOffLon, landingLat, landingLon;  // [deg]
   int duration; // [s]
-  List<double> acc = List(); // recorded min-max accelerations X,Y,Z (units with accelerometer only)
+  List<double> acc = List(); // recorded min-max accelerations X,Y,Z (CUBEs with accelerometer only)
 
   // values looked-up based on location:
-  String takeOffPlaceName;
-  String landingPlaceName;
+  String takeOffLocationCode;
+  String landingLocationCode;
 
   // misc. values:
   String pic;   // name/id of this flight's pic
@@ -34,9 +36,9 @@ class LogbookEntry {
     ts = takeOff.millisecondsSinceEpoch ~/ 1000; // [s]
     id = "$ognId-$ts";
 
-    // TODO vyhledat nejblizsi letiste, ul plochu ci dedinku
-    takeOffPlaceName = "LKKA";
-    landingPlaceName = "LKKA";
+    // find nearest airfield, UL strip or town:
+    takeOffLocationCode = AirfieldManager().getNearest(takeOffLat, takeOffLon);
+    landingLocationCode = AirfieldManager().getNearest(takeOffLat, takeOffLon);
   }
 
   @override
@@ -63,23 +65,16 @@ class LogbookEntry {
     m['landingLat'] = landingLat;
     m['landingLon'] = landingLon;
     m['duration'] = duration;
-    m['acc'] = acc;
+    m['acc'] = jsonEncode(acc);
+
+    m['takeoffLocCode'] = takeOffLocationCode;
+    m['landingLocCode'] = landingLocationCode;
 
     return jsonEncode(m);
   }
 
   factory LogbookEntry.fromJson(String jsonStr) {
     Map<String, dynamic> m = jsonDecode(jsonStr);
-
-//    return new LogbookEntry(
-//      ognId: m['ognId'],
-//      takeOff: DateTime.parse(m['takeoff']),
-//      landing: DateTime.parse(m['landing']),
-//      takeOffLat: m['takeoffLat'],
-//      takeOffLon: m['takeoffLon'],
-//      landingLat: m['landingLat'],
-//      landingLon: m['landingLon'],
-//    );
 
     LogbookEntry e = new LogbookEntry(
       m['ognId'],
@@ -91,7 +86,18 @@ class LogbookEntry {
       m['landingLon'],
     );
 
-    e.acc = m['acc'];
+    if (m.containsKey('acc')) {
+      if(m['acc'] is String) {
+        var l = jsonDecode(m['acc']);
+        e.acc = l.cast<double>();
+
+      }  else {
+        e.acc = m['acc'].cast<double>();
+      }
+    }
+
+    e.takeOffLocationCode = m['takeoffLocCode'];
+    e.landingLocationCode = m['landingLocCode'];
 
     return e;
   }
@@ -103,7 +109,7 @@ class LogbookEntry {
     temp = temp - min * 60;  // remaining seconds
     if (temp > 30) min += 1;
 
-    print("$duration | $hours h $min m");
+    //print("$duration | $hours h $min m");
 
     if (hours > 0)
       return "$hoursᵒ $min'";

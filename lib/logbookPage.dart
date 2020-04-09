@@ -1,11 +1,15 @@
 
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cube_control/deviceListPage.dart';
+import 'package:intl/intl.dart';
+
 import 'package:cube_control/btManager.dart';
 import 'package:cube_control/cubeInterface.dart';
 import 'package:cube_control/logBook.dart';
-import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:cube_control/deviceListPage.dart';
-import 'package:intl/intl.dart';
+import 'package:cube_control/airfieldManager.dart';
+import 'appDrawer.dart';
 
 
 class LogbookPage extends StatefulWidget {
@@ -20,14 +24,13 @@ class LogbookPage extends StatefulWidget {
 }
 
 class _LogbookPageState extends State<LogbookPage> {
-
   List logbookEntries = List();
   bool busy = false;
 
   @override
   void initState() {
     super.initState();
-    loadLogbookFromDb();
+    loadLogbook();
   }
 
   Widget getProgressDialog() {
@@ -45,19 +48,29 @@ class _LogbookPageState extends State<LogbookPage> {
 
   Widget getAccInfo(LogbookEntry e) {
     Text text;
-    if(e.acc.length != 0)
-      text = Text("accX <${e.acc[0].toStringAsFixed(1)}; ${e.acc[1].toStringAsFixed(1)}>\naccY <${e.acc[2].toStringAsFixed(1)}; ${e.acc[3].toStringAsFixed(1)}>\naccZ <${e.acc[4].toStringAsFixed(1)}; ${e.acc[5].toStringAsFixed(1)}>");
+    if (e.acc.length != 0)
+      text = Text(
+          "min/max acc\nX <${e.acc[0].toStringAsFixed(1)}; ${e.acc[1].toStringAsFixed(1)}>\nY <${e.acc[2].toStringAsFixed(1)}; ${e.acc[3].toStringAsFixed(1)}>\nZ <${e.acc[4].toStringAsFixed(1)}; ${e.acc[5].toStringAsFixed(1)}>");
     else
       text = Text('\nNo ACC data.');
 
-    return Container(
-      padding: const EdgeInsets.only(left: 4, right: 4),
-      child: text,
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.only(left: 4, right: 4),
+            child: text,
+          ),
+        ],
+      ),
     );
   }
 
   Widget getRow(int i) {
-    DateFormat df = new DateFormat('HH:mm');
+    DateFormat dateFormat = new DateFormat('EEEE d.M.y');
+    DateFormat timeFormat = new DateFormat('HH:mm');
     LogbookEntry e = logbookEntries[i];
 
     Row row = Row(
@@ -70,12 +83,27 @@ class _LogbookPageState extends State<LogbookPage> {
               children: <Widget>[
                 Container(
                   padding: const EdgeInsets.only(left: 4, right: 4), //all(8),
+                  child: Text(
+                    "${dateFormat.format(e.takeOff)}",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.only(left: 4, right: 4), //all(8),
                   child: Icon(Icons.flight_takeoff),
                 ),
-                Text("${df.format(e.takeOff)} | ${e.takeOffPlaceName}",
+                Text(
+                  "${timeFormat.format(e.takeOff)} ${e.takeOffLocationCode}",
                   style: TextStyle(
                     fontSize: 20,
-                    ),
+                  ),
                 ),
               ],
             ),
@@ -86,7 +114,8 @@ class _LogbookPageState extends State<LogbookPage> {
                   padding: const EdgeInsets.only(left: 4, right: 4), //all(8),
                   child: Icon(Icons.flight_land),
                 ),
-                Text("${df.format(e.landing)} | ${e.landingPlaceName}",
+                Text(
+                  "${timeFormat.format(e.landing)} ${e.landingLocationCode}",
                   style: TextStyle(
                     fontSize: 20,
                   ),
@@ -100,7 +129,8 @@ class _LogbookPageState extends State<LogbookPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Text(e.getDurationFormatted(),
+              Text(
+                e.getDurationFormatted(),
                 style: TextStyle(
                   fontSize: 30,
                 ),
@@ -113,17 +143,14 @@ class _LogbookPageState extends State<LogbookPage> {
 //          child: Icon(Icons.more_vert),
 //        ),
         Column(
-          children: <Widget>[
-            getAccInfo(e)
-          ],
-
+          children: <Widget>[getAccInfo(e)],
         ),
       ],
     );
 
     Container c = Container(
 //      padding: const EdgeInsets.all(8),
-      height: 50,
+      height: 70,
       child: row,
     );
 
@@ -158,32 +185,60 @@ class _LogbookPageState extends State<LogbookPage> {
 //        .pushNamed(FirmwareUpdatePage.routeName, arguments: firmwares[index]);
   }
 
-  loadLogbookFromDb() async {
-    // TODO load from local storage
+  loadLogbook() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (prefs. containsKey('logbook')) {
+      List<String> l = prefs.getStringList('logbook');
+
+      logbookEntries.clear();
+
+      setState(() {
+        for (String jsonStr in l) {
+          LogbookEntry e = LogbookEntry.fromJson(jsonStr);
+          logbookEntries.add(e);
+        }
+      });
+    }
+  }
+
+  void saveLogbook() async {
+    if (logbookEntries.length == 0) return;
+
+    List<String> l = List();
+
+    for (LogbookEntry e in logbookEntries) {
+      String s = e.toJson();
+      l.add(s);
+    }
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setStringList('logbook', l);
   }
 
   void onDownloadIconClick(context) async {
     if (busy) return;
 
+    AirfieldManager().init();
     await BTManager().refresh();
 
-    if(!BTManager().btEnabled || !BTManager().btAvailable) {
+    if (!BTManager().btEnabled || !BTManager().btAvailable) {
       Fluttertoast.showToast(
-          msg: "Enable bluetooth!",
-          toastLength: Toast.LENGTH_SHORT,
+        msg: "Enable bluetooth!",
+        toastLength: Toast.LENGTH_SHORT,
       );
       return;
     }
 
-    if(BTManager().selectedIndex < 0 || BTManager().selectedDevice == null) {
+    if (BTManager().selectedIndex < 0 || BTManager().selectedDevice == null) {
       Navigator.of(context).pushNamed(DeviceListPage.routeName);
     }
 
-    if(!BTManager().isConnected()) {
+    if (!BTManager().isConnected()) {
       bool res = await BTManager().connectTo(BTManager().selectedDevice);
-      if(!res) {
+      if (!res) {
         Fluttertoast.showToast(
-          msg: "Logbook readout from\n'${BTManager().selectedDevice.name}' failed!",
+          msg:
+              "Logbook readout from\n'${BTManager().selectedDevice.name}' failed!",
           toastLength: Toast.LENGTH_SHORT,
         );
         return;
@@ -191,8 +246,10 @@ class _LogbookPageState extends State<LogbookPage> {
     }
 
     // read file 'logbook.csv' from the tracker:
-    String resp = await CubeInterface().query(CubeInterface.CMD_CAT_LOGBOOK, "\$FILE;logbook.csv;", delayMs: 500); // $FILE;logbook.csv;....*CRC\n
-    if(resp == null) {
+    String resp = await CubeInterface().query(
+        CubeInterface.CMD_CAT_LOGBOOK, "\$FILE;logbook.csv;",
+        delayMs: 500); // $FILE;logbook.csv;....*CRC\n
+    if (resp == null) {
       Fluttertoast.showToast(
         msg: "File 'logbook.csv' is empty or SD card not present!'",
         toastLength: Toast.LENGTH_LONG,
@@ -207,18 +264,19 @@ class _LogbookPageState extends State<LogbookPage> {
     // $FILE;logbook.csv;74616B656F66664 .. B312E39390A*39
     String fileContentHex = resp.split(';')[2].split('*')[0];
     StringBuffer sb = new StringBuffer();
-    for(int i=0; i<fileContentHex.length-1; i+=2) {
-      String hex = "${fileContentHex[i]}${fileContentHex[i+1]}";
-      int x =int.parse(hex, radix: 16);  // from HEX string to in
+    for (int i = 0; i < fileContentHex.length - 1; i += 2) {
+      String hex = "${fileContentHex[i]}${fileContentHex[i + 1]}";
+      int x = int.parse(hex, radix: 16); // from HEX string to in
       String c = String.fromCharCode(x); // from int to char
       sb.write(c);
     }
 
-    DateFormat df = new DateFormat("dd-MM-yyyy HH:mm:ss");  // silly there is no other way..
+    DateFormat df =
+        new DateFormat("dd-MM-yyyy HH:mm:ss"); // silly there is no other way..
     List<String> lines = sb.toString().split('\n');
     for (String line in lines) {
       List<String> items = line.split(';');
-      if(items.length < 10) continue;
+      if (items.length < 10) continue;
 
       String takeoffDate = items[0];
       String takeoffTime = items[1];
@@ -231,10 +289,10 @@ class _LogbookPageState extends State<LogbookPage> {
 //      String hours = items[8];
 //      String minutes = items[9];
 
-      List<double> acc = List(); // recorded min-max accelerations (if available)
+      List<double> acc =
+          List(); // recorded min-max accelerations (if available)
       if (items.length == 16)
         for (int i = 10; i < 16; i++) {
-          print("II: ${items[i]}");
           acc.add(double.parse(items[i]));
         }
 
@@ -242,9 +300,11 @@ class _LogbookPageState extends State<LogbookPage> {
 
       DateTime takeOff, landing;
       try {
-        takeOff = df.parse("${takeoffDate.substring(0,2)}-${takeoffDate.substring(2,4)}-20${takeoffDate.substring(4,6)} ${takeoffTime.substring(0,2)}:${takeoffTime.substring(2,4)}:${takeoffTime.substring(4,6)}}");
-        landing = df.parse("${landingDate.substring(0,2)}-${landingDate.substring(2,4)}-20${landingDate.substring(4,6)} ${landingTime.substring(0,2)}:${landingTime.substring(2,4)}:${landingTime.substring(4,6)}}");
-      } catch(ex) {
+        takeOff = df.parse(
+            "${takeoffDate.substring(0, 2)}-${takeoffDate.substring(2, 4)}-20${takeoffDate.substring(4, 6)} ${takeoffTime.substring(0, 2)}:${takeoffTime.substring(2, 4)}:${takeoffTime.substring(4, 6)}}");
+        landing = df.parse(
+            "${landingDate.substring(0, 2)}-${landingDate.substring(2, 4)}-20${landingDate.substring(4, 6)} ${landingTime.substring(0, 2)}:${landingTime.substring(2, 4)}:${landingTime.substring(4, 6)}}");
+      } catch (ex) {
         continue;
       }
 
@@ -255,13 +315,12 @@ class _LogbookPageState extends State<LogbookPage> {
 
       LogbookEntry e = new LogbookEntry(ognId, takeOff, landing, takeOffLat, takeOffLon, landingLat, landingLon);
       e.acc = acc;
-      if( logbookEntries.indexOf(e) < 0)
-        logbookEntries.add(e);
+      if (logbookEntries.indexOf(e) < 0) logbookEntries.add(e);
     }
 
     logbookEntries.sort((a, b) => b.compareTo(a));
 
-    // TODO save to local storage
+    saveLogbook();
 
     setState(() {
       busy = false;
@@ -274,19 +333,19 @@ class _LogbookPageState extends State<LogbookPage> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-          Builder(  // this is here to get the right 'context' for the onPressed action
-            builder: (context) =>
-                Center(
-                  child:
-                  IconButton(
-                    icon: const Icon(Icons.file_download), // cached
-                    tooltip: 'download data from tracker',
-                    onPressed: () => onDownloadIconClick(context),
-                  ),
-                ),
+          Builder(
+            // this is here to get the right 'context' for the onPressed action
+            builder: (context) => Center(
+              child: IconButton(
+                icon: const Icon(Icons.file_download), // cached
+                tooltip: 'download data from tracker',
+                onPressed: () => onDownloadIconClick(context),
+              ),
+            ),
           ),
         ],
       ),
+      drawer: getAppDrawer(context),
       body: getBody(),
     );
   }
