@@ -22,7 +22,7 @@ class AirfieldRecord {
 
 class AirfieldManager {
 
-  final String airfiledsFilePath = 'assets/res/airfields.json';
+  final String airfieldsFilePath = 'assets/res/airfields.json';
 
   AirfieldManager._privateConstructor();
 
@@ -39,7 +39,7 @@ class AirfieldManager {
   }
 
   Future<List<AirfieldRecord>>_loadAirfields() async {
-    String jsonStr = await _getFileData(airfiledsFilePath);
+    String jsonStr = await _getFileData(airfieldsFilePath);
     List jsonList = json.decode(jsonStr);
 
     airfields.clear();
