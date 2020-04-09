@@ -1,10 +1,8 @@
 
-import 'dart:convert';
-
 import 'package:cube_control/cubeInterface.dart';
+import 'package:cube_control/firmwareManager.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 import 'package:screen/screen.dart';
 
@@ -202,65 +200,22 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     if(endLine != null) terminal.text += endLine;
   }
 
-  Future<bool> downloadFirmware(Firmware fw) async {
-    http.Response response;
-    try {
-      response = await http.get(fw.url);
-    } catch (exception) {
-      // nix
-    }
-
-    if (response != null && response.statusCode == 200) {
-      printToTerminal("  got ${response.contentLength} bytes");
-      fw.setBytes(response.bodyBytes);
-
-      String key = firmware.filename;
-      String bytesEncoded = base64Encode(fw.bytes);
-
-      Uint8List bytes2 = base64Decode(bytesEncoded);
-      bool res = fw.bytes == bytes2;
-
-      // TODO store firmware locally
-      // firmware.isStoredLocally = true;
-
-      return true;
-    }
-
-    return false;
-  }
-
-  Future<bool> downloadFirmwareBinFile() async {
-    if(firmware == null) {
-      printToTerminal("Unknown firmware. This should never happen. If it did, please let the author know how!");
-      return false;
-    }
-
-    if(firmware.bytes != null) {
-      printToTerminal("File '${firmware.filename}' already downloadedflight.");
-      return true;
-    }
-
-    printToTerminal("Downloading file '${firmware.filename}'..");
-    bool res = await downloadFirmware(firmware);
-    if (res) {
-      printToTerminal("  this is good.");
-      return true;
-
-    } else {
-      printToTerminal("  Connection failed.\n  Cannot proceed.");
-    }
-
-    return false;
-  }
-
   void flashFirmware() async {
     if(!BTManager().isConnected()) {
       bool res = await onConnectIconClick(context);
       if (!res) return;
     }
 
-    bool firmwareDownloaded = await downloadFirmwareBinFile();
-    if (!firmwareDownloaded) return;
+    if (!firmware.isStoredLocally) {
+      printToTerminal("File '${firmware.filename}' is not stored in the phone. Go to back and refresh the firmware list.");
+      return;
+    }
+
+    bool res = await FirmwareManager.instance.loadFirmwareBytes(firmware);
+    if(!res) {
+      printToTerminal('Could not load firmware bin file from local storage! Go to back and try to refresh the firmware list.');
+      return;
+    }
 
     printToTerminal("All right, hold my beer..");
 

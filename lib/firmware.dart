@@ -18,7 +18,7 @@ class Firmware {
   Firmware({this.type, this.date, this.title,  this.notes, this.filename, this.url, this.crc, this.len});
 
   factory Firmware.fromJson(Map<String, dynamic> json) {
-    return Firmware(
+    Firmware fw = Firmware(
       type: json['type'],
       date: json['date'],
       title: json['title'],
@@ -28,6 +28,28 @@ class Firmware {
       crc: json['crc'],
       len: json['len'],
     );
+
+    if(json.containsKey('storedLocally'))
+      fw.isStoredLocally = json['storedLocally'] == "true";
+
+    fw.getTs(); // just to set correct TS in this instance
+
+    return fw;
+  }
+
+  Map<String, Object> toJson() {
+    Map<String, Object> m = Map();
+    m['type'] = type;
+    m['date'] = date;
+    m['title'] = title;
+    m['notes'] = notes;
+    m['filename'] = filename;
+    m['url'] = url;
+    m['crc'] = crc;
+    m['len'] = len;
+    m['storedLocally'] = isStoredLocally.toString();
+
+    return m;
   }
 
   /// @return CRC as XOR of the bytes
