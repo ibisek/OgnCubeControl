@@ -41,7 +41,7 @@ class _DeviceListPageState extends State<DeviceListPage> {
     });
   }
 
-  /// Populates list with paired BT dev. names/
+  /// Populates list with paired BT dev. names
   void populateListView() async {
     pairedDevices.clear();
     if(BTManager.instance.pairedBtDevices.length > 0) {
