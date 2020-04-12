@@ -248,7 +248,7 @@ class _LogbookPageState extends State<LogbookPage> {
     // read file 'logbook.csv' from the tracker:
     String resp = await CubeInterface().query(
         CubeInterface.CMD_CAT_LOGBOOK, "\$FILE;logbook.csv;",
-        delayMs: 500); // $FILE;logbook.csv;....*CRC\n
+        delayMs: 6000); // $FILE;logbook.csv;....*CRC\n
     if (resp == null) {
       Fluttertoast.showToast(
         msg: "File 'logbook.csv' is empty or SD card not present!'",
