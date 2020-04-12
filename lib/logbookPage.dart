@@ -26,6 +26,7 @@ class LogbookPage extends StatefulWidget {
 class _LogbookPageState extends State<LogbookPage> {
   List logbookEntries = List();
   bool busy = false;
+  bool showProgressDialog = false;
 
   @override
   void initState() {
@@ -173,7 +174,7 @@ class _LogbookPageState extends State<LogbookPage> {
   }
 
   Widget getBody() {
-    if (busy)
+    if (busy | showProgressDialog)
       return getProgressDialog();
     else
       return getListView(context);
@@ -245,10 +246,19 @@ class _LogbookPageState extends State<LogbookPage> {
       }
     }
 
-    // read file 'logbook.csv' from the tracker:
+    setState(() {
+      showProgressDialog = true;
+    });
+
+    // read file 'logbook.csv' from the tracker: (this can take some time..)
     String resp = await CubeInterface().query(
         CubeInterface.CMD_CAT_LOGBOOK, "\$FILE;logbook.csv;",
-        delayMs: 6000); // $FILE;logbook.csv;....*CRC\n
+        delayMs: 20000); // $FILE;logbook.csv;....*CRC\n
+
+    setState(() {
+      showProgressDialog = false;
+    });
+
     if (resp == null) {
       Fluttertoast.showToast(
         msg: "File 'logbook.csv' is empty or SD card not present!'",
