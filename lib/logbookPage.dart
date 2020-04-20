@@ -250,10 +250,15 @@ class _LogbookPageState extends State<LogbookPage> {
       showProgressDialog = true;
     });
 
-    // read file 'logbook.csv' from the tracker: (this can take some time..)
-    String resp = await CubeInterface().query(
-        CubeInterface.CMD_CAT_LOGBOOK, "\$FILE;logbook.csv;",
-        delayMs: 20000); // $FILE;logbook.csv;....*CRC\n
+    // ls the card if there even is a 'logbook.csv' file:
+    String resp = await CubeInterface().query(CubeInterface.CMD_LS, "logbook.csv",delayMs: 2000);
+
+    if (resp != null && resp.indexOf('logbook.csv') >= 0) {
+      // read file 'logbook.csv' from the tracker: (this can take some time..)
+      resp = await CubeInterface().query(
+          CubeInterface.CMD_CAT_LOGBOOK, "\$FILE;logbook.csv;",
+          delayMs: 20000); // $FILE;logbook.csv;....*CRC\n
+    }
 
     setState(() {
       showProgressDialog = false;
@@ -267,12 +272,22 @@ class _LogbookPageState extends State<LogbookPage> {
       return;
     }
 
+    // $FILE;logbook.csv;74616B656F66664 .. B312E39390A*39
+    List<String> items = resp.split(';');
+
+    if(items.length != 3) {
+      Fluttertoast.showToast(
+        msg: "Could not parse logbook response.",
+        toastLength: Toast.LENGTH_LONG,
+      );
+      return;
+    }
+
     setState(() {
       busy = true;
     });
 
-    // $FILE;logbook.csv;74616B656F66664 .. B312E39390A*39
-    String fileContentHex = resp.split(';')[2].split('*')[0];
+    String fileContentHex = items[2].split('*')[0];
     StringBuffer sb = new StringBuffer();
     for (int i = 0; i < fileContentHex.length - 1; i += 2) {
       String hex = "${fileContentHex[i]}${fileContentHex[i + 1]}";
@@ -299,8 +314,7 @@ class _LogbookPageState extends State<LogbookPage> {
 //      String hours = items[8];
 //      String minutes = items[9];
 
-      List<double> acc =
-          List(); // recorded min-max accelerations (if available)
+      List<double> acc = List(); // recorded min-max accelerations (if available)
       if (items.length == 16)
         for (int i = 10; i < 16; i++) {
           acc.add(double.parse(items[i]));
