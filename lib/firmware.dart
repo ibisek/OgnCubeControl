@@ -69,7 +69,7 @@ class Firmware {
     int calculatedCrc = calcCrc(bytes);
 
     if(crc != calculatedCrc || len != bytes.lengthInBytes) {
-      throw Exception("CRC ($crc vs. $calculatedCrc}) or LEN ($len vs. ${bytes.lengthInBytes}) do not match!");
+      throw Exception("CRC ($crc vs. $calculatedCrc) or LEN ($len vs. ${bytes.lengthInBytes}) do not match!");
     }
   }
 
