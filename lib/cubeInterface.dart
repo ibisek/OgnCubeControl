@@ -5,6 +5,7 @@ import 'package:cube_control/btManager.dart';
 
 class CubeInterface {
 
+  static const String CMD_LS = '\$CMDLS\n';
   static const String CMD_RST = '\$CMDRST\n';
   static const String CMD_CAT_LOGBOOK = '\$CMDCAT;logbook.csv\n';
 

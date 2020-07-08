@@ -38,7 +38,11 @@ class BTManager {
     print("[INFO] btAvailable: $btAvailable");
 
     if(btEnabled && btAvailable) {
-      pairedBtDevices = await FlutterBluetoothSerial.instance.getBondedDevices();
+      try {
+        pairedBtDevices = await FlutterBluetoothSerial.instance.getBondedDevices();
+      } catch (ex) {
+        print("[WARN] error when accessing BT bonded devices for the first time");
+      }
 
       if(selectedDevice == null) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
