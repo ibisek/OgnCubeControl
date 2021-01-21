@@ -251,14 +251,11 @@ class _LogbookPageState extends State<LogbookPage> {
     });
 
     // ls the card if there even is a 'logbook.csv' file:
-    String resp = await CubeInterface().query(CubeInterface.CMD_LS, "logbook.csv",delayMs: 2000);
+    String resp = await CubeInterface().query(CubeInterface.CMD_LS, "logbook.csv", timeout: 2000);
 
-    if (resp != null && resp.indexOf('logbook.csv') >= 0) {
+    if (resp != null && resp.indexOf('logbook.csv') >= 0)
       // read file 'logbook.csv' from the tracker: (this can take some time..)
-      resp = await CubeInterface().query(
-          CubeInterface.CMD_CAT_LOGBOOK, "\$FILE;logbook.csv;",
-          delayMs: 20000); // $FILE;logbook.csv;....*CRC\n
-    }
+      resp = await CubeInterface().query(CubeInterface.CMD_CAT_LOGBOOK, "\$FILE;logbook.csv;"); // $FILE;logbook.csv;....*CRC\n
 
     setState(() {
       showProgressDialog = false;
