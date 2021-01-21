@@ -1,4 +1,3 @@
-import 'package:cube_control/cubeInterface.dart';
 ///
 /// Manages all affairs regarding bluetooth.
 /// Keeps list of paired devices.
@@ -9,10 +8,11 @@ import 'package:cube_control/cubeInterface.dart';
 /// @see https://stackoverflow.com/questions/12649573/how-do-you-build-a-singleton-in-dart
 ///
 
-
+import 'package:flutter/cupertino.dart';
 import 'dart:typed_data';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cube_control/cubeInterface.dart';
 
 
 class BTManager {
@@ -170,6 +170,26 @@ class BTManager {
     }
 
     return null;
+  }
+
+  Future<String> readUntil(String terminationChar) async {
+    while(rxDataBuffer.toString().indexOf('\n') < 0)
+      await Future.delayed(new Duration(milliseconds: 100)); // give it some time
+
+    int i = rxDataBuffer.toString().indexOf('\n');
+    String response = rxDataBuffer.toString().substring(0, i);
+
+    int startIndex = i+1;
+    int endIndex = rxDataBuffer.length-1;
+    if (endIndex - startIndex > 0) {
+      String theRest = rxDataBuffer.toString().substring(startIndex, endIndex);
+      rxDataBuffer.clear();
+      rxDataBuffer.write(theRest);
+    } else {
+      rxDataBuffer.clear();
+    }
+
+    return response;
   }
 
 } // ~ class
