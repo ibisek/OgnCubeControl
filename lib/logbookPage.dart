@@ -41,7 +41,7 @@ class _LogbookPageState extends State<LogbookPage> {
         children: <Widget>[
           CircularProgressIndicator(),
           //LinearProgressIndicator(),
-          Text('\nDownloading data from the CUBE..'),
+          Text('\nDownloading data from the CUBE\n(this may take a while)', textAlign: TextAlign.center),
         ],
       ),
     );
@@ -301,45 +301,62 @@ class _LogbookPageState extends State<LogbookPage> {
     List<String> lines = sb.toString().split('\n');
     for (String line in lines) {
       List<String> items = line.split(';');
-      if (items.length < 10) continue;
+      if (items.length < 9) continue;  // header line: ognId;takeoffDate;takeoffTime;takeoffLat;takeoffLon;landingDate;landingTime;landingLat;landingLon;hours;minutes;axMin;axMax;ayMin;ayMax;azMin;azMax
 
-      String takeoffDate = items[0];
-      String takeoffTime = items[1];
-      String takeoffLatStr = items[2];
-      String takeoffLonStr = items[3];
-      String landingDate = items[4];
-      String landingTime = items[5];
-      String landingLatStr = items[6];
-      String landingLonStr = items[7];
-//      String hours = items[8];
-//      String minutes = items[9];
-
-      List<double> acc = List(); // recorded min-max accelerations (if available)
-      if (items.length == 16)
-        for (int i = 10; i < 16; i++) {
-          acc.add(double.parse(items[i]));
-        }
-
-      String ognId = CubeInterface().getOgnIdStr();
-
-      DateTime takeOff, landing;
       try {
+        String ognId = items[0];
+        String takeoffDate = items[1];
+        String takeoffTime = items[2];
+        String takeoffLatStr = items[3];
+        String takeoffLonStr = items[4];
+        String landingDate = items[5];
+        String landingTime = items[6];
+        String landingLatStr = items[7];
+        String landingLonStr = items[8];
+        // String hours = items[9];     // app-calculated value
+        // String minutes = items[10];  // app-calculated value
+
+        List<
+            double> acc = List(); // recorded min-max accelerations (if available)
+        if (items.length == 17)
+          for (int i = 11; i < 17; i++) {
+            acc.add(double.parse(items[i]));
+          }
+
+        // String ognId = CubeInterface().getOgnIdStr();
+
+        DateTime takeOff, landing;
         takeOff = df.parse(
-            "${takeoffDate.substring(0, 2)}-${takeoffDate.substring(2, 4)}-20${takeoffDate.substring(4, 6)} ${takeoffTime.substring(0, 2)}:${takeoffTime.substring(2, 4)}:${takeoffTime.substring(4, 6)}}");
+            "${takeoffDate.substring(0, 2)}-${takeoffDate.substring(
+                2, 4)}-20${takeoffDate.substring(4, 6)} ${takeoffTime
+                .substring(0, 2)}:${takeoffTime.substring(2, 4)}:${takeoffTime
+                .substring(4, 6)}}");
         landing = df.parse(
-            "${landingDate.substring(0, 2)}-${landingDate.substring(2, 4)}-20${landingDate.substring(4, 6)} ${landingTime.substring(0, 2)}:${landingTime.substring(2, 4)}:${landingTime.substring(4, 6)}}");
-      } catch (ex) {
-        continue;
+            "${landingDate.substring(0, 2)}-${landingDate.substring(
+                2, 4)}-20${landingDate.substring(4, 6)} ${landingTime
+                .substring(0, 2)}:${landingTime.substring(2, 4)}:${landingTime
+                .substring(4, 6)}}");
+
+        double takeOffLat = double.parse(takeoffLatStr);
+        double takeOffLon = double.parse(takeoffLonStr);
+        double landingLat = double.parse(landingLatStr);
+        double landingLon = double.parse(landingLonStr);
+
+        LogbookEntry e = new LogbookEntry(
+            ognId,
+            takeOff,
+            landing,
+            takeOffLat,
+            takeOffLon,
+            landingLat,
+            landingLon);
+        e.acc = acc;
+        if (logbookEntries.indexOf(e) < 0)
+          logbookEntries.add(e);
+
+      } catch(ex) {
+        continue; // this typically happens on header line
       }
-
-      double takeOffLat = double.parse(takeoffLatStr);
-      double takeOffLon = double.parse(takeoffLonStr);
-      double landingLat = double.parse(landingLatStr);
-      double landingLon = double.parse(landingLonStr);
-
-      LogbookEntry e = new LogbookEntry(ognId, takeOff, landing, takeOffLat, takeOffLon, landingLat, landingLon);
-      e.acc = acc;
-      if (logbookEntries.indexOf(e) < 0) logbookEntries.add(e);
     }
 
     logbookEntries.sort((a, b) => b.compareTo(a));
