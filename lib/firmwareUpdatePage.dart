@@ -229,7 +229,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     //print("OGN id in DEC: $cpuId");
 
     printToTerminal("Executing RST command now..");
-    String resp = await CubeInterface().query(CubeInterface.CMD_RST, 'seconds', delayMs: 6000); // ## serialLoader.f103 ##
+    String resp = await CubeInterface().query(CubeInterface.CMD_RST, 'seconds', timeout: 6000); // ## serialLoader.f103 ##
     print("RST resp: $resp");
 
     resp = await CubeInterface().query('\nPROG', 'CPU ID?');
@@ -291,7 +291,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     }
     printToTerminal(''); // newline after the "progress bar"
 
-    resp = await CubeInterface().query(bytes, "CRC", delayMs: 2000);  // CRC:237
+    resp = await CubeInterface().query(bytes, "CRC", timeout: 2000);  // CRC:237
     printToTerminal("CRC resp: $resp");
     if(resp != null) {
       int ucCRC = int.parse(resp.trim().substring(resp.indexOf(':') + 1));

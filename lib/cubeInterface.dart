@@ -42,12 +42,12 @@ class CubeInterface {
   /// Sends a COMMAND to unit and awaits for EXPECTed string in the line.
   /// @param cmd: command either as String or Uint8List
   /// @param expect: a string to expect in the response line
-  /// @param delayMs: optional, default 400ms
-  Future<String> query(dynamic cmd, String expect, {int delayMs=400}) async {
+  /// @param timeout: optional, default 400ms
+  /// @param wrapBy: optional, line termination char
+  Future<String> query(dynamic cmd, String expect, {int timeout = 60000, String wrapBy='\n'}) async {
     BTManager btm = BTManager();
-    btm.clearBuffer();
 
-    if (cmd != null) {  // just wait for the response when cmd == null
+    if (cmd != null) { // just wait for the response when cmd == null
       if (cmd is String) btm.writeStr(cmd);
       else if (cmd is Uint8List) btm.writeBytes(cmd);
       else {
@@ -56,17 +56,15 @@ class CubeInterface {
       }
     }
 
-    await Future.delayed(new Duration(milliseconds: delayMs)); // give it some time
+    btm.clearBuffer();
 
+    int startTs = DateTime.now().millisecond;
     String response;
-
-    int maxLoops = 123;
     do {
-      response = btm.readLine();
-    } while(--maxLoops > 0 && (response == null || response.indexOf(expect) < 0));
+      response = await btm.readUntil(wrapBy);
+    } while(response.indexOf(expect) < 0 || (DateTime.now().millisecond - startTs) > timeout);
 
-    if (maxLoops > 0) return response;
-    else return null;
+    return response;
   }
 
 }
