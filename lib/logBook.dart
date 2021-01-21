@@ -1,12 +1,12 @@
 
 import 'dart:convert';
-
+import 'package:quiver/core.dart';
 import 'package:cube_control/airfieldManager.dart';
 
 
 class LogbookEntry {
   String id; // unique generated ID - shall be unique world-wide ;)
-  int ts; // take-off ts; used for sorting
+  int ts; // take-off ts; used for sorting and comparing
 
   // tracker-collected values:
   String ognId; // used to identify source of the record
@@ -44,13 +44,16 @@ class LogbookEntry {
   @override
   int compareTo(LogbookEntry e2) => ts - e2.ts;
 
+  // @override
+  // bool equals(LogbookEntry e2) => ts == e2.ts;
+
   @override
   bool operator == (other) {
-    return id == other.id;
+    return ognId == other.ognId && ts == other.ts;
   }
 
   @override int get hashCode {
-    return int.parse("@{(int)ognId}$ts");
+    return hash3(id, ognId, ts);  // hashX from the quiver package
   }
 
   String toJson() {
