@@ -21,8 +21,8 @@ class CubeInterface {
 
   String getOgnIdStr() {
     if(_ognIdStr == null) {
-      String btDeviceName = BTManager().selectedDevice.name;
-      RegExp re = new RegExp(r'(\d{6})');
+      String btDeviceName = BTManager().selectedDevice.name.toUpperCase();
+      RegExp re = new RegExp(r'([A-Z0-9]{6})');
       var match = re.firstMatch(btDeviceName);
       _ognIdStr = btDeviceName.substring(match.start, match.end);
       _ognId = int.parse(_ognIdStr, radix: 16); // HEX str id to int
