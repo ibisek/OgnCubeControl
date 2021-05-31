@@ -114,7 +114,7 @@ class BTManager {
     conn.input.listen((data) {
       String strData = String.fromCharCodes(data);
       rxDataBuffer.write(strData);
-      //print("[BUF LEN] ${rxDataBuffer.length} [RXL] $strData");
+      // print("[BUF LEN] ${rxDataBuffer.length} [RXL] ${strData.length}");
 
     }).onDone(() {
       print("[INFO] BT disconnected by remote peer");
@@ -173,14 +173,14 @@ class BTManager {
   }
 
   Future<String> readUntil(String terminationChar) async {
-    while(rxDataBuffer.toString().indexOf('\n') < 0)
+    while(rxDataBuffer.toString().indexOf(terminationChar) < 0)
       await Future.delayed(new Duration(milliseconds: 100)); // give it some time
 
-    int i = rxDataBuffer.toString().indexOf('\n');
+    int i = rxDataBuffer.toString().indexOf(terminationChar);
     String response = rxDataBuffer.toString().substring(0, i);
 
     int startIndex = i+1;
-    int endIndex = rxDataBuffer.length-1;
+    int endIndex = rxDataBuffer.length;
     if (endIndex - startIndex > 0) {
       String theRest = rxDataBuffer.toString().substring(startIndex, endIndex);
       rxDataBuffer.clear();
