@@ -246,10 +246,12 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     print("RST resp: $resp");
 
     int blockSize = 1024;           // CUBE[2|3]: bs=1kB
-    String startAddr = "08002800";  // CUBE2+3 (f103): 0x08002800
+    String startAddr = "08002800";  // CUBE2+3 (F103): 0x08002800
+    int betweenBlocksDelay = 900;   // CUBE2+3 (F103)
     if (firmware.hwRevisions.contains(3.1) || firmware.hwRevisions.contains(3.5)) {
-      blockSize = 256;            // CUBE[3.1|3.5]: bs=256 bytes
-      startAddr = "08002000";     // CUBE3.1+3.5 (l152): 0x08002000
+      blockSize = 256;              // CUBE[3.1|3.5]: bs=256 bytes
+      startAddr = "08002000";       // CUBE3.1+3.5 (F152): 0x08002000
+      betweenBlocksDelay = 300;     // CUBE3.1+3.5 (F152)
     }
 
     resp = await CubeInterface().query('\nPROG', 'CPU ID?');
@@ -304,7 +306,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
 
       // give the uC time to store the bytes into flash; yes - it really needs this time:
       if(!lastBlock) {
-        await Future.delayed(new Duration(milliseconds: 900));
+        await Future.delayed(new Duration(milliseconds: betweenBlocksDelay));
         i++; // nearly the most import thing here ;)
       }
     }
