@@ -77,12 +77,26 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
       String resp = await CubeInterface().query('\$CMDVER\n', '\$VER'); // $VER;CUBE3;021338;2020-02-19*59
       //print("VER resp: $resp");
       if(resp != null) {
-        String currentVersion = resp.split(';')[3].split('*')[0];
-        printToTerminal("  current firmware version: $currentVersion");
+        var items = resp.split(';');
+        if (items.length == 4) {
+          String hwRevision = items[1];
+          String firmwareVersion = items[3].split('*')[0];
 
-        int ts = DateTime.parse("$currentVersion 00:00:01Z").toUtc().millisecondsSinceEpoch;
-        if(firmware.getTs() < ts)
-          printToTerminal("\nWARNING:\nSelected fw is OLDER than the current one!\n");
+          printToTerminal("  hardware revision: $hwRevision");
+          printToTerminal("  current firmware version: $firmwareVersion");
+
+          int ts = DateTime
+              .parse("$firmwareVersion 00:00:01Z")
+              .toUtc()
+              .millisecondsSinceEpoch;
+          if (firmware.getTs() < ts)
+            printToTerminal(
+                "\nWARNING:\nSelected fw is OLDER than the current one!\n");
+
+        } else {
+          printToTerminal(
+              "\nWARNING:\nDid not receive valid versionCMD response!\n");
+        }
       }
     }
 
@@ -229,7 +243,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     //print("OGN id in DEC: $cpuId");
 
     printToTerminal("Executing RST command now..");
-    String resp = await CubeInterface().query(CubeInterface.CMD_RST, 'seconds', timeout: 6000); // ## serialLoader.f103 ##
+    String resp = await CubeInterface().query(CubeInterface.CMD_RST, 'flashing', timeout: 6000);  // ..some text all bootloaders display
     print("RST resp: $resp");
 
     resp = await CubeInterface().query('\nPROG', 'CPU ID?');
@@ -267,15 +281,18 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     printToTerminal("DATA LEN resp: $resp");
 
     printToTerminal("Data transfer: ");
-    // transfer data in 1kB blocks
-    const int BLOCK_SIZE = 1024;
+
+    int blockSize = 1024; // CUBE[2|3]: bs=1kB; CUBE[3.1|3.5]: bs=256 bytes
+    if (firmware.hwRevisions.contains(3.1) || firmware.hwRevisions.contains(3.5))
+      blockSize = 256;
+
     int i = 0;
     bool lastBlock = false;
     while (!lastBlock) {
-      if ((i+1)*BLOCK_SIZE < firmware.bytes.lengthInBytes) {
-        bytes = firmware.bytes.sublist(i*BLOCK_SIZE, (i+1) * BLOCK_SIZE);
+      if ((i+1)*blockSize < firmware.bytes.lengthInBytes) {
+        bytes = firmware.bytes.sublist(i*blockSize, (i+1) * blockSize);
       } else {
-        bytes = firmware.bytes.sublist(i*BLOCK_SIZE, firmware.bytes.lengthInBytes);
+        bytes = firmware.bytes.sublist(i*blockSize, firmware.bytes.lengthInBytes);
         lastBlock = true;
       }
 
