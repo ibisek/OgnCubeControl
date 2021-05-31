@@ -14,8 +14,9 @@ class Firmware {
   int timestamp;  // unix ts [s]
   bool isStoredLocally = false; // indicates this file needs to be downloaded
   Uint8List bytes;  // firmware bytes
+  List hwRevisions;  // supported HW variants for this particular firmware
 
-  Firmware({this.type, this.date, this.title,  this.notes, this.filename, this.url, this.crc, this.len});
+  Firmware({this.type, this.date, this.title,  this.notes, this.filename, this.url, this.crc, this.len, this.hwRevisions});
 
   factory Firmware.fromJson(Map<String, dynamic> json) {
     Firmware fw = Firmware(
@@ -27,6 +28,7 @@ class Firmware {
       url: json['url'],
       crc: json['crc'],
       len: json['len'],
+      hwRevisions: json['hw']
     );
 
     if(json.containsKey('storedLocally'))
@@ -48,6 +50,7 @@ class Firmware {
     m['crc'] = crc;
     m['len'] = len;
     m['storedLocally'] = isStoredLocally.toString();
+    m['hw'] = hwRevisions;
 
     return m;
   }
