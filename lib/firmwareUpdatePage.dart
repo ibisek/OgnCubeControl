@@ -233,7 +233,6 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
 
     printToTerminal("All right, hold my beer..");
 
-
     Screen.keepOn(true);  // keep the screen on - not to interrupt the flashing process!
 
     // get OGN id from the BT device name:
@@ -245,6 +244,13 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     printToTerminal("Executing RST command now..");
     String resp = await CubeInterface().query(CubeInterface.CMD_RST, 'flashing', timeout: 6000);  // ..some text all bootloaders display
     print("RST resp: $resp");
+
+    int blockSize = 1024;           // CUBE[2|3]: bs=1kB
+    String startAddr = "08002800";  // CUBE2+3 (f103): 0x08002800
+    if (firmware.hwRevisions.contains(3.1) || firmware.hwRevisions.contains(3.5)) {
+      blockSize = 256;            // CUBE[3.1|3.5]: bs=256 bytes
+      startAddr = "08002000";     // CUBE3.1+3.5 (l152): 0x08002000
+    }
 
     resp = await CubeInterface().query('\nPROG', 'CPU ID?');
     printToTerminal("PROG resp: $resp $ognIdStr");
@@ -263,7 +269,7 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     bytes = new Uint8List(5);  // these 5 bytes will contain '\nADDR'
     buffer = bytes.buffer;
     bdata = new ByteData.view(buffer);
-    bdata.setUint32(1, int.parse("08002800", radix: 16));  // 0x08002800
+    bdata.setUint32(1, int.parse(startAddr, radix: 16));
     bytes[0] = '\n'.codeUnitAt(0);
     //print("ADDR as DEC bytes: $bytes");
 
@@ -281,10 +287,6 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     printToTerminal("DATA LEN resp: $resp");
 
     printToTerminal("Data transfer: ");
-
-    int blockSize = 1024; // CUBE[2|3]: bs=1kB; CUBE[3.1|3.5]: bs=256 bytes
-    if (firmware.hwRevisions.contains(3.1) || firmware.hwRevisions.contains(3.5))
-      blockSize = 256;
 
     int i = 0;
     bool lastBlock = false;
