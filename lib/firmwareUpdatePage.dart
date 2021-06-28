@@ -250,8 +250,8 @@ class _FirmwareUpdatePageState extends State<FirmwareUpdatePage> {
     int betweenBlocksDelay = 900;   // CUBE2+3 (F103)
     if (firmware.hwRevisions.contains(3.1) || firmware.hwRevisions.contains(3.5)) {
       blockSize = 256;              // CUBE[3.1|3.5]: bs=256 bytes
-      startAddr = "08002000";       // CUBE3.1+3.5 (F152): 0x08002000
-      betweenBlocksDelay = 300;     // CUBE3.1+3.5 (F152)
+      startAddr = "08002000";       // CUBE3.1+3.5 (L152): 0x08002000
+      betweenBlocksDelay = 300;     // CUBE3.1+3.5 (L152)
     }
 
     resp = await CubeInterface().query('\nPROG', 'CPU ID?');
